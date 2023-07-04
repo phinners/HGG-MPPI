@@ -1,0 +1,25 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Run exHGG-MPC" type="PythonConfigurationType" factoryName="Python">
+    <module name="RL-MPC" />
+    <option name="INTERPRETER_OPTIONS" value="" />
+    <option name="PARENT_ENVS" value="true" />
+    <envs>
+      <env name="PYTHONUNBUFFERED" value="1" />
+    </envs>
+    <option name="SDK_HOME" value="$USER_HOME$/miniconda3/envs/exHGG/bin/python" />
+    <option name="SDK_NAME" value="exHGG" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+    <option name="IS_MODULE_SDK" value="false" />
+    <option name="ADD_CONTENT_ROOTS" value="false" />
+    <option name="ADD_SOURCE_ROOTS" value="false" />
+    <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/play.py" />
+    <option name="PARAMETERS" value="--env FetchPickDynLiftedObstaclesEnv-v1 --play_path log/ddpg2-FetchPickDynLiftedObstaclesEnv-v1-hgg/ --play_epoch 19 --goal mpc --play_policy MPCRLPolicy --timesteps 240 --play_mode mujoco --env_n_substeps 5" />
+    <option name="SHOW_COMMAND_LINE" value="false" />
+    <option name="EMULATE_TERMINAL" value="false" />
+    <option name="MODULE_MODE" value="false" />
+    <option name="REDIRECT_INPUT" value="false" />
+    <option name="INPUT_FILE" value="" />
+    <method v="2" />
+  </configuration>
+</component>
