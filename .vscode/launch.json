@@ -1,0 +1,22 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Train FetchPickDynObstaclesEnv",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/train2.py",
+            "console": "integratedTerminal",
+            "args" : ["--alg", "ddpg2",
+                      "--epochs", "20",
+                      "--env", "FetchPickDynObstaclesEnv-v1",
+                      "--reward_min", "-10",
+                      "--goal", "mpc"            
+        ],
+            "justMyCode": false //true
+        }
+    ]
+}
