@@ -1,23 +1,23 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Run exHGG-MPC" type="PythonConfigurationType" factoryName="Python">
+  <configuration default="false" name="Test MPPI-HGG" type="PythonConfigurationType" factoryName="Python">
     <module name="RL-MPC" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
     <envs>
-      <env name="PYTHONUNBUFFERED" value="1" />
       <env name="LD_LIBRARY_PATH" value="$LD_LIBRARY_PATH:$USER_HOME$/.mujoco/mujoco210/bin:/usr/lib/nvidia" />
       <env name="LD_PRELOAD" value="/usr/lib/x86_64-linux-gnu/libstdc++.so.6:/usr/lib/x86_64-linux-gnu/libGLEW.so" />
       <env name="PYTHONPATH" value="$USER_HOME$/forces_pro_client/" />
     </envs>
     <option name="SDK_HOME" value="" />
+    <option name="SDK_NAME" value="$PROJECT_DIR$/.conda" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-    <option name="IS_MODULE_SDK" value="true" />
+    <option name="IS_MODULE_SDK" value="false" />
     <option name="ADD_CONTENT_ROOTS" value="false" />
-    <option name="ADD_SOURCE_ROOTS" value="false" />
+    <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/play.py" />
-    <option name="PARAMETERS" value="--env FetchPickDynObstaclesEnv-v1 --play_path &quot;log/ddpg2-FetchPickDynObstaclesEnv-v1-hgg/&quot; --play_epoch 19 --goal mpc --play_policy MPCRLPolicy --timesteps 240 --play_mode mujoco --env_n_substeps 5" />
-    <option name="SHOW_COMMAND_LINE" value="false" />
+    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/test_policy.py" />
+    <option name="PARAMETERS" value="--env FetchPickDynObstaclesEnv-v1 --play_path &quot;log/ddpg2-FetchPickDynObstaclesEnv-v1-hgg/&quot; --play_epoch 19 --goal mpc --play_policy MPPIRLPolicy --timesteps 1000 --env_n_substeps 5 --episodes 100" />
+    <option name="SHOW_COMMAND_LINE" value="true" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />
     <option name="REDIRECT_INPUT" value="false" />

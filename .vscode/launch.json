@@ -5,17 +5,39 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python: Play FetchPickDynObstaclesEnv-v1",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/play.py",
+            "console": "integratedTerminal",
+            "args":[
+                "--env", "FetchPickDynObstaclesEnv-v1",
+                "--play_path", "log/ddpg2-FetchPickDynObstaclesEnv-v1-hgg/", 
+                "--play_epoch", "19", 
+                "--goal", "mpc", 
+                "--play_policy", "MPPIRLPolicy", 
+                "--timesteps", "1000"
+            ],
+            "justMyCode": true
+        },
+        {
             "name": "Python: Train FetchPickDynObstaclesEnv",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/train2.py",
             "console": "integratedTerminal",
-            "args" : ["--alg", "ddpg2",
-                      "--epochs", "20",
-                      "--env", "FetchPickDynObstaclesEnv-v1",
-                      "--reward_min", "-10",
-                      "--goal", "mpc"            
-        ],
+            "args": [
+                "--alg",
+                "ddpg2",
+                "--epochs",
+                "20",
+                "--env",
+                "FetchPickDynObstaclesEnv-v2",
+                "--reward_min",
+                "-10",
+                "--goal",
+                "mpc"
+            ],
             "justMyCode": false //true
         }
     ]
