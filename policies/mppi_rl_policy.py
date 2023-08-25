@@ -19,6 +19,9 @@ class MPPIRLPolicy(Policy):
         self.rl_policy.set_envs(envs)
         self.mppi_policy.set_envs(envs)
 
+        for env in envs:
+            env.disable_action_limit()
+
     def initial_info(self, obs: Vector) -> InfoVector:
         pass
 

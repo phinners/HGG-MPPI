@@ -1,8 +1,11 @@
+from typing import List
+
 import numpy as np
 import scipy.signal
 import torch
 
 import mppi
+from env_ext.fetch import MPCControlGoalEnv
 from policies.policy import Policy
 
 
@@ -49,9 +52,14 @@ class MPPIPolicy(Policy):
     def predict(self, obs: Vector) -> (Vector, InfoVector):
         return self.predict_with_goal(obs, obs[0]['desired_goal'])
 
+    def set_envs(self, envs: List[MPCControlGoalEnv]):
+        super().set_envs(envs)
+        for env in envs:
+            env.disable_action_limit()
+
     def predict_with_goal(self, obs: Vector, goal) -> (Vector, InfoVector):
         x_init, obstacle_positions = self.parse_observation(obs[0], goal)
-        goal = torch.tensor(goal)
+        goal = torch.tensor(goal, device=self.device)
 
         # shift the control inputs
         self.u = torch.roll(self.u, -1, dims=0)
@@ -63,11 +71,12 @@ class MPPIPolicy(Policy):
             self.update_control(x_init, goal, obstacle_positions)
 
         target = self.convert_to_target(x_init, self.u[0])
-        action = np.array([target[0] - x_init[0], target[1] - x_init[1], target[2] - x_init[2], -0.8])
+        action = np.array(
+            [(target[0] - x_init[0]).cpu(), (target[1] - x_init[1]).cpu(), (target[2] - x_init[2]).cpu(), -0.8])
 
         # for hyperparameter tuning: check the angle between action and (goal - x_init)
-        v1 = target[0:3] - x_init[0:3]
-        v2 = goal - x_init[0:3]
+        v1 = (target[0:3] - x_init[0:3]).cpu()
+        v2 = (goal - x_init[0:3]).cpu()
         cos_angle = np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
         angle_rad = np.arccos(np.clip(cos_angle, -1, 1))
         if angle_rad > np.pi * 1 / 2 or angle_rad < -np.pi * 1 / 2:
