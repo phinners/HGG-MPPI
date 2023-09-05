@@ -10,7 +10,7 @@ def getCollisions():
 def get_parameters(args):
     if args.tune_mppi <= 0:
         args.α = 5.94e-1
-        args.λ = 1.62e1
+        args.λ = 40  # 1.62e1
         args.σ = 0.05  # 4.0505  # 10.52e1
         args.χ = 0  # 2.00e-2
         args.ω1 = 15.37
@@ -54,7 +54,7 @@ def get_parameters(args):
         collision_reachable_workspace = torch.ge(dist_center, radius_workspace)
 
         lowerborder = torch.tensor([1.05, 0.4, 0.40])  # X,Y,Z
-        higherborder = torch.tensor([1.55, 1.10, 0.51])  # X,Y,Z
+        higherborder = torch.tensor([1.55, 1.10, 0.54])  # X,Y,Z
 
         border_collision = torch.logical_or(torch.any(torch.le(x[:, 0:3], lowerborder), dim=1),
                                             torch.any(torch.ge(x[:, 0:3], higherborder), dim=1))
@@ -72,26 +72,26 @@ def get_parameters(args):
         collision = torch.logical_or(collision,
                                      torch.all(torch.le(dist1,
                                                         torch.tensor(obstacles[3:6], device=device) + torch.tensor(
-                                                            [0.035, 0.035, 0.03])),
+                                                            [0.045, 0.045, 0.03])),
                                                dim=1))
         collision = torch.logical_or(collision,
                                      torch.all(
                                          torch.le(dist2_low,
                                                   torch.tensor([obstacles[9], obstacles[10], obstacles[11] / 2],
                                                                device=device) + torch.tensor(
-                                                      [0.035, 0.1, 0.02])),
+                                                      [0.07, 0.1, 0.02])),
                                          dim=1))
         collision = torch.logical_or(collision,
                                      torch.all(
                                          torch.le(dist2_high,
                                                   torch.tensor([obstacles[9], obstacles[10], obstacles[11] / 2],
                                                                device=device) + torch.tensor(
-                                                      [0.035, 0.035, 0.03])),
+                                                      [0.045, 0.035, 0.03])),
                                          dim=1))
         collision = torch.logical_or(collision,
                                      torch.all(torch.le(dist3,
                                                         torch.tensor(obstacles[15:18], device=device) + torch.tensor(
-                                                            [0.035, 0.035, 0.03])),
+                                                            [0.045, 0.045, 0.03])),
                                                dim=1))
         collision = torch.logical_or(collision,
                                      border_collision)
