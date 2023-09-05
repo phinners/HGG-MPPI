@@ -86,7 +86,11 @@ class MPPIPolicy(Policy):
     def parse_observation(self, obs, goal):
         ob = obs['observation']
         pos = ob[0:3]
-        vel = ob[20:23]
+        if self.LastPosition[0] == 0:
+            vel = np.zeros(3, )  # ob[20:23]
+        else:
+            vel = (pos - self.LastPosition) / self.Δt
+        self.LastPosition = pos
         x_init = torch.tensor([pos[0], pos[1], pos[2], vel[0], vel[1], vel[2]], dtype=self.dtype, device=self.device)
         parameters = self.envs[0].extract_parameters_3d(self.T, self.Δt, goal)
         obstacle_positions = parameters[:, 6:]
@@ -101,7 +105,11 @@ class MPPIPolicy(Policy):
         S = torch.zeros(self.K, dtype=self.dtype, device=self.device)
         for i in range(self.T):
             x = self.F(x, v[:, i])
-            S += self.q(x, goal, obstacle_positions[i])
+            interim_goal = (goal - state[0:3]) * i + goal
+            # print("Interim Goal " + str(i) + ": " + str(interim_goal))
+            trajectory_rollouts[:, :, i + 1] = x
+            # S += self.q(x, goal, obstacle_positions[i])
+            S += self.q(x, interim_goal, obstacle_positions[i])
             S += v[:, i] @ self.Σ_inv @ self.u[i]
         S += self.ϕ(x, goal)
 
@@ -125,9 +133,12 @@ class MPPIPolicy(Policy):
             obstacle = obstacles[obstacle_start:obstacle_end]
             obstacle_position = obstacle[0:3]
             obstacle_dimensions = obstacle[3:6]
+            endeffector_dimensions = np.array([0.04, 0.04, 0.03])
 
-            obstacle_min = torch.tensor(obstacle_position - obstacle_dimensions, dtype=self.dtype, device=self.device)
-            obstacle_max = torch.tensor(obstacle_position + obstacle_dimensions, dtype=self.dtype, device=self.device)
+            obstacle_min = torch.tensor(obstacle_position - (obstacle_dimensions + endeffector_dimensions),
+                                        dtype=self.dtype, device=self.device)
+            obstacle_max = torch.tensor(obstacle_position + (obstacle_dimensions + endeffector_dimensions),
+                                        dtype=self.dtype, device=self.device)
 
             if torch.all(torch.logical_and(goal >= obstacle_min, goal <= obstacle_max)):
                 return False

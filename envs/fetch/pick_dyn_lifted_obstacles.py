@@ -59,7 +59,7 @@ class FetchPickDynLiftedObstaclesEnv(robot_env.RobotEnv, gym.utils.EzPickle):
         self.distance_threshold = 0.05
         self.reward_type = reward_type
         self.limit_action = 0.05  # limit maximum change in position
-        self.block_max_z = 0.53 - 0.02 - 0.02
+        self.block_max_z = 0.51  # 0.50  # 0.53 - 0.02 - 0.02
 
         self.field = [1.3, 0.75, 0.6, 0.25, 0.35, 0.2]
         self.dyn_obstacles_geom_names = ['obstacle:geom', 'obstacle2:geom']
@@ -81,8 +81,8 @@ class FetchPickDynLiftedObstaclesEnv(robot_env.RobotEnv, gym.utils.EzPickle):
     def _setup_dyn_obstacles(self):
 
         # setup velocity limits
-        self.vel_lims = np.array([0.3, 0.45])
-        self.vel_lims2 = np.array([0.1, 0.3])
+        self.vel_lims = np.array([0.6, 0.9])  # ([0.3, 0.45])
+        self.vel_lims2 = np.array([0.2, 0.6])  # ([0.1, 0.3])
         self.n_moving_obstacles = len(self.dyn_obstacles)
         self.n_obstacles = len(self.dyn_obstacles) + len(self.stat_obstacles)
         self.current_obstacle_vels = [0.0, 0.0]
@@ -283,7 +283,7 @@ class FetchPickDynLiftedObstaclesEnv(robot_env.RobotEnv, gym.utils.EzPickle):
         self.viewer.cam.distance = 2.5
         self.viewer.cam.azimuth = 130.
         self.viewer.cam.elevation = -24.
-        self.viewer._run_speed = 0.02
+        self.viewer._run_speed = 0.2
 
     def _render_callback(self):
         # Visualize target.

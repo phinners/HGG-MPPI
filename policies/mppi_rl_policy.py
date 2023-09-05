@@ -32,9 +32,15 @@ class MPPIRLPolicy(Policy):
     def predict(self, obs: Vector) -> (Vector, InfoVector):
         [rl_action], _ = self.rl_policy.predict(obs)
 
+        desired_goal = obs[0]["desired_goal"]
         sub_goal = self.envs[0].subgoal(rl_action)
         # self.mppi_policy.reset()
         [action], _ = self.mppi_policy.predict_with_goal(obs, sub_goal)
         action[3] = rl_action[3]
 
+        if (linalg.norm(desired_goal - current_pos) > 0.11):
+            [action], _ = self.mppi_policy.predict_with_goal(obs, sub_goal)
+        else:
+            [action], _ = self.mppi_policy.predict_with_goal(obs, desired_goal)
+        action[3] = -0.8  # rl_action[3]
         return [action], _
