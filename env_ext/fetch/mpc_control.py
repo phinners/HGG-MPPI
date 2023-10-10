@@ -113,6 +113,22 @@ class MPCControlGoalEnv(VanillaGoalEnv):
 
         return sub_goal
 
+    def subgoal_sim(self, rl_action: np.ndarray, grip_pos: np.ndarray) -> np.ndarray:
+        action = np.clip(rl_action, self.action_space.low, self.action_space.high)
+        pos_ctrl, gripper_ctrl = action[:3], action[3]
+
+        pos_ctrl *= 0.022  # 5  # limit maximum change in position
+
+        sub_goal = grip_pos + pos_ctrl
+
+        if self.sim_env.block_z:
+            target_z = sub_goal[2]
+            if target_z > self.sim_env.block_max_z:
+                # robot can not move higher
+                sub_goal[2] = max(0, self.sim_env.block_max_z)
+
+        return sub_goal
+
     def extract_parameters_3d(self, horizon: int, ts: float, sub_goal: np.ndarray):
         goal = self.goal
         sub_goal = sub_goal

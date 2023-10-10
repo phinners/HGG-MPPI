@@ -34,7 +34,9 @@ class Tester:
 
         # setup logger
         args.logger.summary_init(None, None)
+        args.logger.add_item('Episode')
         args.logger.add_item('TimeCost(sec)')
+        args.logger.add_item('Timesteps')
         args.logger.add_item('Collisions')
         args.logger.add_item('ExReward')
         args.logger.add_item('Success')
@@ -46,6 +48,8 @@ class Tester:
         test_col_tolerance = self.args.test_col_tolerance
         acc_sum = 0.0
         col_sum = 0.0
+        step_sum = 0.0
+        succ_step_sum = 0.0
         tol_acc_sum = 0.0
         start_seed = 1000
 
@@ -54,6 +58,7 @@ class Tester:
             self.policy.reset()
             ob = env.reset()
             env_info = None
+            logger_timesteps = 0
 
             args.logger.tabular_clear()
             args.logger.summary_clear()
@@ -65,11 +70,17 @@ class Tester:
                 actions, infos = self.policy.predict(obs=[ob])
                 action = actions[0]
                 ob, reward, _, env_info = env.step(action)
+                logger_timesteps += 1
+
+                # env.render()
+
                 if env_info['Success']:
                     break
 
+            args.logger.add_record('Episode', i)
             args.logger.add_record('Success', int(env_info['Success']))
             args.logger.add_record('TimeCost(sec)', env.time)
+            args.logger.add_record('Timesteps', logger_timesteps)
             args.logger.add_record('Collisions', env.collisions)
             args.logger.add_record('ExReward', env_info['ExReward'])
             args.logger.add_record('Success/mpc', int(env.collisions <= test_col_tolerance and env_info['Success']))
@@ -77,16 +88,23 @@ class Tester:
 
             acc_sum += env_info['Success']
             col_sum += env.collisions
+            step_sum += logger_timesteps
+            if env_info['Success']:
+                succ_step_sum += logger_timesteps
             if env.collisions <= test_col_tolerance:
                 tol_acc_sum += env_info['Success']
 
+            args.logger.tabular_show()
             args.logger.save_csv(filename="test_policy_{}_tol{}_run{}"
-            .format(args.play_policy, test_col_tolerance, args.test_run_id))
+                                 .format(args.play_policy, test_col_tolerance, args.test_run_id))
 
         tol_acc = tol_acc_sum / self.test_rollouts
 
         print('Success rate: {}'.format(acc_sum / self.test_rollouts))
         print(bcolors.WARNING + 'Success rate (tol): {}'.format(tol_acc) + bcolors.ENDC)
+        print('Mean Timesteps per Episode: {}'.format(step_sum / self.test_rollouts))
+        print('Mean Timesteps per Succesfull Episode: {}'.format(succ_step_sum / acc_sum))
+        print('Mean Collisions per Episode: {}'.format(col_sum / self.test_rollouts))
         print('Collisions sum: ', col_sum)
 
 

@@ -9,10 +9,10 @@ def getCollisions():
 
 def get_parameters(args):
     if args.tune_mppi <= 0:
-        args.α = 5.94e-1
+        args.α = 0  # 5.94e-1
         args.λ = 40  # 1.62e1
-        args.σ = 0.05  # 4.0505  # 10.52e1
-        args.χ = 0  # 2.00e-2
+        args.σ = 0.25  # 4.0505  # 10.52e1
+        args.χ = 2.00e-2
         args.ω1 = 15.37
         args.ω2 = 9.16e3
         args.ω_Φ = 5.41
@@ -49,11 +49,11 @@ def get_parameters(args):
         # cost -= args.ω1 * torch.norm(x[:, 3:6], dim=1) ** 2
 
         center_workspace = torch.tensor([0.1531, 0.7498])
-        radius_workspace = torch.tensor([1.4])  # 1.3759
+        radius_workspace = torch.tensor([1.37])  # 1.3759
         dist_center = torch.norm(x[:, 0:2] - center_workspace, dim=1)
         collision_reachable_workspace = torch.ge(dist_center, radius_workspace)
 
-        lowerborder = torch.tensor([1.05, 0.4, 0.40])  # X,Y,Z
+        lowerborder = torch.tensor([1.05, 0.4, 0.3])  # X,Y,Z #Z:0.4
         higherborder = torch.tensor([1.55, 1.10, 0.54])  # X,Y,Z
 
         border_collision = torch.logical_or(torch.any(torch.le(x[:, 0:3], lowerborder), dim=1),
@@ -72,7 +72,7 @@ def get_parameters(args):
         collision = torch.logical_or(collision,
                                      torch.all(torch.le(dist1,
                                                         torch.tensor(obstacles[3:6], device=device) + torch.tensor(
-                                                            [0.045, 0.045, 0.03])),
+                                                            [0.055, 0.055, 0.03])),
                                                dim=1))
         collision = torch.logical_or(collision,
                                      torch.all(
@@ -86,25 +86,28 @@ def get_parameters(args):
                                          torch.le(dist2_high,
                                                   torch.tensor([obstacles[9], obstacles[10], obstacles[11] / 2],
                                                                device=device) + torch.tensor(
-                                                      [0.045, 0.035, 0.03])),
+                                                      [0.055, 0.055, 0.03])),
                                          dim=1))
         collision = torch.logical_or(collision,
                                      torch.all(torch.le(dist3,
                                                         torch.tensor(obstacles[15:18], device=device) + torch.tensor(
-                                                            [0.045, 0.045, 0.03])),
+                                                            [0.055, 0.055, 0.03])),
                                                dim=1))
-        collision = torch.logical_or(collision,
-                                     border_collision)
+        # collision = torch.logical_or(collision,
+        #                             border_collision)
 
-        collision = torch.logical_or(collision,
-                                     collision_reachable_workspace)
+        # collision = torch.logical_or(collision,
+        #                             collision_reachable_workspace)
 
         if torch.any(collision):
             # print("Trajectorie with collision detected!")
             pass
 
-        cost += args.ω2 * 2000 * collision
+        if torch.all(collision):
+            print("All Trajectorie with collision detected!")
+            pass
 
+        # cost += 100 * border_collision
         cost += args.ω2 * collision
         return cost
 

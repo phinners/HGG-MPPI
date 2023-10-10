@@ -39,8 +39,20 @@ class MPPIRLPolicy(Policy):
         action[3] = rl_action[3]
 
         if (linalg.norm(desired_goal - current_pos) > 0.11):
+            for i in range(self.mppi_policy.T):
+                [rl_action], _ = self.rl_policy.predict(obs_sim)
+                sub_goal_sim = self.envs[0].subgoal_sim(rl_action, obs_sim[0]['observation'][0:3])
+                obs_pos = np.array(
+                    self.envs[0].env.get_obstacles(time=self.envs[0].time + (i + 2) * self.mppi_policy.Δt)).flatten()
+                diff = obs_sim[0]['observation'][3:6] - obs_sim[0]['observation'][0:3]
+                obs_sim[0]['observation'][0:3] = sub_goal_sim.copy()
+                obs_sim[0]['observation'][3:6] = sub_goal_sim.copy() + diff
+                obs_sim[0]['observation'][25:25 + len(obs_pos)] = obs_pos
+                self.mppi_policy.trajectory.append(sub_goal_sim)
             [action], _ = self.mppi_policy.predict_with_goal(obs, sub_goal)
         else:
+            for i in range(self.mppi_policy.T):
+                self.mppi_policy.trajectory.append(desired_goal)
             [action], _ = self.mppi_policy.predict_with_goal(obs, desired_goal)
         action[3] = -0.8  # rl_action[3]
         return [action], _
