@@ -16,7 +16,7 @@
     <option name="ADD_SOURCE_ROOTS" value="false" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/play.py" />
-    <option name="PARAMETERS" value="--env FetchPickDynObstaclesEnv-v1 --play_path &quot;log/ddpg2-FetchPickDynObstaclesEnv-v1-hgg/&quot; --play_epoch 19 --goal mpc --play_policy RLPolicy --play_mode mujoco" />
+    <option name="PARAMETERS" value="--env FetchPickDynDoorObstaclesEnv-v1 --play_path &quot;log/ddpg2-FetchPickDynDoorObstaclesEnv-v1-hgg/&quot; --play_epoch 19 --goal mpc --play_policy RLPolicy --play_mode mujoco" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />

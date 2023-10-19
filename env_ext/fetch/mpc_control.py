@@ -137,7 +137,7 @@ class MPCControlGoalEnv(VanillaGoalEnv):
         N = horizon
         n = self.env.n_obstacles
         positions = np.array([self._extract_obstacles(time=t + dt * i) for i in range(N)])
-        positions = np.reshape(positions, (-1, n * 6))
+        # positions = np.reshape(positions, (-1, n * 6)) # What does this line do?? #TODO
         n_obst = positions.shape[0]
 
         # add goal to all timesteps

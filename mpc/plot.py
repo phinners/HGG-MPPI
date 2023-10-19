@@ -40,9 +40,10 @@ class MPCDebugPlot:
         'FetchPickDynObstaclesEnv-v1': [[0.05, 0.03], [0.05, 0.048], [0.05, 0.05]],
         'FetchPickDynObstaclesEnv-v2': [[0.05, 0.03], [0.05, 0.048], [0.05, 0.05]],
         'FetchPickDynLiftedObstaclesEnv-v1': [[0.05, 0.055 + 0.02, 0.055], [0.05, 0.05 + 0.02, 0.05],
-            [0.05, 0.02, 0.02]],
+                                              [0.05, 0.02, 0.02]],
         'FetchPickDynObstaclesMaxEnv-v1': [[0.05, 0.03], [0.05, 0.048], [0.05, 0.05]],
         'FrankaFetchPickDynSqrObstacle-v1': [[0.05, 0.05], [0.05, 0.05], [0.05, 0.05]],
+        'FetchPickDynDoorObstaclesEnv-v1': [[0.05, 0.05], [0.05, 0.05], [0.05, 0.05]],
     }
 
     obstacle_colors = {
@@ -53,6 +54,7 @@ class MPCDebugPlot:
         'FetchPickDynObstaclesMaxEnv-v1': ['#416ab6', '#5aa9a2'],
 
         'FrankaFetchPickDynSqrObstacle-v1': ['#416ab6', '#416ab6'],
+        'FetchPickDynDoorObstaclesEnv-v1': ['#416ab6', '#416ab6', '#5aa9a2'],
     }
 
     def __init__(self, args, sim_length: int, model):
@@ -145,10 +147,10 @@ class MPCDebugPlot:
             p = parameters[i]
             bbox = (p[6], p[7], obst_sz, obst_sz)
             ellipse(bbox, fill=False, linestyle=":", edgecolor='blue' if i == 0 else 'green',
-                alpha=(1.0 - i / N))
+                    alpha=(1.0 - i / N))
             bbox = (p[12], p[13], obst_sz, obst_sz)
             ellipse(bbox, fill=False, linestyle=":", edgecolor='blue' if i == 0 else 'green',
-                alpha=(1.0 - i / N))
+                    alpha=(1.0 - i / N))
             # bbox = (p[18], p[19], obst_sz, obst_sz)
             # ellipse(bbox, fill=False, linestyle=":", edgecolor='blue' if i == 0 else 'green',
             #         alpha=(1.0 - i / N))

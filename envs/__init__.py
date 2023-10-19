@@ -2,6 +2,7 @@ import gym
 
 from .fetch.franka_pick_dyn_labyrinth import FrankaFetchPickDynLabyrinthEnv
 from .fetch.franka_pick_dyn_sqr_obstacle import FrankaFetchPickDynSqrObstacleEnv
+from .fetch.pick_dyn_door_obstacles import FetchPickDynDoorObstaclesEnv
 from .fetch.pick_dyn_labyrinth import FetchPickDynLabyrinthEnv
 from .fetch.pick_dyn_lifted_obstacles import FetchPickDynLiftedObstaclesEnv
 from .fetch.pick_dyn_obstacles import FetchPickDynObstaclesEnv
@@ -69,6 +70,12 @@ def register_custom_envs():
     gym.envs.register(
         id='FrankaFetchPickDynSqrObstacle-v1',
         entry_point='envs:FrankaFetchPickDynSqrObstacleEnv',
+        max_episode_steps=100,
+        kwargs={'reward_type': 'sparse', 'n_substeps': 20},
+    )
+    gym.envs.register(
+        id='FetchPickDynDoorObstaclesEnv-v1',
+        entry_point='envs:FetchPickDynDoorObstaclesEnv',
         max_episode_steps=100,
         kwargs={'reward_type': 'sparse', 'n_substeps': 20},
     )
