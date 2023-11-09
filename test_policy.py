@@ -1,3 +1,5 @@
+import time
+
 import tensorflow as tf
 
 from common import get_args
@@ -52,6 +54,7 @@ class Tester:
         succ_step_sum = 0.0
         tol_acc_sum = 0.0
         start_seed = 1000
+        comp_sum = 0.0
 
         for i in range(self.test_rollouts):
             env.np_random.seed(start_seed + i)
@@ -67,7 +70,9 @@ class Tester:
                 self.policy.set_sub_goals([ob['desired_goal']])
 
             for timestep in range(args.timesteps):
+                start_time = time.time()
                 actions, infos = self.policy.predict(obs=[ob])
+                comp_sum += time.time() - start_time
                 action = actions[0]
                 ob, reward, _, env_info = env.step(action)
                 logger_timesteps += 1
@@ -106,6 +111,7 @@ class Tester:
         print('Mean Timesteps per Succesfull Episode: {}'.format(succ_step_sum / acc_sum))
         print('Mean Collisions per Episode: {}'.format(col_sum / self.test_rollouts))
         print('Collisions sum: ', col_sum)
+        print('Mean Computational Time [s] per Timestep: {}'.format(comp_sum / step_sum))
 
 
 if __name__ == "__main__":

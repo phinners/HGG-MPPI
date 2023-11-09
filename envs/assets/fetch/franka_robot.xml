@@ -3,7 +3,7 @@
         <geom class="panda_viz" mesh="link0_viz"/>
         <geom class="panda_col" mesh="link0_col" mass="2.91242"/>
         <body name="robot0_link1" pos="0 0 0.333">
-            <joint name="robot0_joint1" range="-2.8973 2.8973" class="panda_arm"/>
+            <joint name="robot0_joint1" limited="true" range="-2.8973 2.8973" class="panda_arm"/>
             <geom class="panda_viz" mesh="link1_viz"/>
             <geom class="panda_col" mesh="link1_col" mass="2.7063"/>
             <body name="robot0_link2" pos="0 0 0" quat="0.707107 -0.707107 0 0">
@@ -25,7 +25,7 @@
                             <geom class="panda_viz" mesh="link5_viz"/>
                             <geom class="panda_grey_viz" mesh="link5_dark_viz"/>
                             <geom class="panda_col" mesh="link5_col" mass="3.00049"/>
-                            <body name="robot0_link6" pos="0 0 0" euler='1.57 0 1.57'>
+                            <body name="robot0_link6" pos="0 0 0" quat="0.707107 0.707107 0 0">
                                 <joint name="robot0_joint6" limited="true" range="-1.6573 2.1127"
                                        class="panda_forearm"/>
                                 <!-- <body name="panda0_link6" pos="0 0 0" quat="0.707107 0.707107 0 0"> -->
@@ -33,7 +33,7 @@
                                 <geom class="panda_viz" mesh="link6_viz"/>
                                 <geom class="panda_grey_viz" mesh="link6_dark_viz"/>
                                 <geom class="panda_col" mesh="link6_col" mass="1.3235"/>
-                                <body name="robot0_link7" pos="0.088 0 0" euler='1.57 0 0.7854'>
+                                <body name="robot0_link7" pos="0.088 0 0" euler='1.57 0 0.'>
                                     <joint name="robot0_joint7" limited="true" range="-2.8973 2.8973"
                                            class="panda_forearm"/>
                                     <!-- <body name="panda0_link7" pos="0.088 0 0" quat="0.707107 0.707107 0 0"> -->
@@ -102,7 +102,7 @@
                                                 <!--                                                <geom size="0.008 0.004 0.008" pos="0 0.005 -0.015" quat="0 0 0 1" type="box" group="0" solref="0.01 0.5" friction = "2 0.05 0.0001" conaffinity="1" contype="1" name="finger2_pad_collision"/>-->
                                                 <geom size="0.018 0.004 0.038" pos="0 0.008 0.015" quat="0 0 0 1"
                                                       type="box" material="robot0:gripper_finger_mat" condim="4"
-                                                      friction="1 0.05 0.01" name="finger2_pad_collision"/>
+                                                      friction=" 1 0.05 0.01" name="finger2_pad_collision"/>
                                             </body>
                                         </body>
                                     </body>

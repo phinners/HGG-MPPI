@@ -17,7 +17,10 @@ def make_mpc(args):
         'FetchPickDynObstaclesMaxEnv-v1': pick_dyn_obstacles,
 
         'FrankaFetchPickDynSqrObstacle-v1': pick_dyn_sqr_obstacles,
-        'FetchPickDynDoorObstaclesEnv-v1': pick_dyn_door_obstacles
+        'FetchPickDynDoorObstaclesEnv-v1': pick_dyn_door_obstacles,
+        'FrankaFetchPickDynDoorObstaclesEnv-v1': pick_dyn_door_obstacles,
+        'FrankaFetchPickDynObstaclesMaxEnv-v1': pick_dyn_obstacles,
+        'FrankaFetchPickDynLiftedObstaclesEnv-v1': pick_dyn_lifted_obstacles,
     }
 
     return a[args.env].generate_pathplanner(create=args.mpc_gen, path=args.mpc_path)

@@ -40,7 +40,8 @@ class Player:
         # seed = 5995
         # seed = 1240
         # seed = 4014
-        seed = 3019
+        # seed = 3019
+        seed = 1002
         env.np_random.seed(seed)  # TODO remove
 
         for i in range(self.test_rollouts):
@@ -65,6 +66,7 @@ class Player:
 
                 actions, infos = self.policy.predict(obs=[ob])
                 action = actions[0]
+                # action[3] /= 500
                 ob, _, _, env_info = env.step(action)
 
                 # end = time.time()
@@ -104,7 +106,7 @@ class Player:
                             pass
 
                     if env_info['Success']:
-                        print('Success. Exiting. Time steps: ', timestep)
+                        print('\n Success. Exiting. Time steps: ', timestep)
                         if self.debug_plot:
                             self.debug_plot.show()
                         else:

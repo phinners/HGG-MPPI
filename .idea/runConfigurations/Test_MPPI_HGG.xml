@@ -16,7 +16,7 @@
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/test_policy.py" />
-    <option name="PARAMETERS" value="--env FetchPickDynDoorObstaclesEnv-v1 --play_path &quot;log/ddpg2-FetchPickDynDoorObstaclesEnv-v1-hgg/&quot; --play_epoch 19 --goal mpc --play_policy MPPIRLPolicy --timesteps 1000 --env_n_substeps 5 --episodes 200" />
+    <option name="PARAMETERS" value="--env FrankaFetchPickDynDoorObstaclesEnv-v1 --play_path &quot;log/ddpg2-FetchPickDynDoorObstaclesEnv-v1-hgg/&quot; --play_epoch 19 --goal mpc --play_policy MPPIRLPolicy --timesteps 1000 --env_n_substeps 5 --episodes 200" />
     <option name="SHOW_COMMAND_LINE" value="true" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />
