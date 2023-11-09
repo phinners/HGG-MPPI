@@ -52,7 +52,7 @@ class MPCControlGoalEnv(VanillaGoalEnv):
     def extend_obs(self, obs, prev_obs):
         sim = self.sim
         exists_collision = False
-        object_id = self.sim_env.geom_id_object
+        # object_id = self.sim_env.geom_id_object
         for i in range(sim.data.ncon):
             contact = sim.data.contact[i]
 
@@ -66,16 +66,17 @@ class MPCControlGoalEnv(VanillaGoalEnv):
             self.collisions += 1
 
         # calculate the velocities of the objects
-        real_obstacle_info = obs['real_obstacle_info']
-        real_obstacle_info_pos = real_obstacle_info[:, 0:3]
-        prev_real_obstacle_info_pos = prev_obs['real_obstacle_info'][:, 0:3]
-        dt = self.dt
-        obj_vels = (real_obstacle_info_pos - prev_real_obstacle_info_pos) / dt
-        obs['obj_vels'] = obj_vels
-        ob = obs['observation'].copy()
+        if self.sim_env.env.n_obstacles:
+            real_obstacle_info = obs['real_obstacle_info']
+            real_obstacle_info_pos = real_obstacle_info[:, 0:3]
+            prev_real_obstacle_info_pos = prev_obs['real_obstacle_info'][:, 0:3]
+            dt = self.dt
+            obj_vels = (real_obstacle_info_pos - prev_real_obstacle_info_pos) / dt
+            obs['obj_vels'] = obj_vels
+            ob = obs['observation'].copy()
 
-        # extend the observation with obstacle positions and velocities
-        obs['observation'] = np.concatenate([ob, real_obstacle_info.ravel(), obj_vels.ravel()])
+            # extend the observation with obstacle positions and velocities
+            obs['observation'] = np.concatenate([ob, real_obstacle_info.ravel(), obj_vels.ravel()])
 
         return obs
 
@@ -115,9 +116,9 @@ class MPCControlGoalEnv(VanillaGoalEnv):
 
     def subgoal_sim(self, rl_action: np.ndarray, grip_pos: np.ndarray) -> np.ndarray:
         action = np.clip(rl_action, self.action_space.low, self.action_space.high)
-        pos_ctrl, gripper_ctrl = action[:3], action[3]
+        pos_ctrl, rot_ctrl, gripper_ctrl = action[0:3], action[3:7], action[7]
 
-        pos_ctrl *= 0.022  # 5  # limit maximum change in position
+        pos_ctrl *= 0.08  # 0.018  # 0.022  # limit maximum change in position
 
         sub_goal = grip_pos + pos_ctrl
 
