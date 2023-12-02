@@ -147,7 +147,8 @@ class MPCPolicy(Policy):
         self.old_ob = ob
 
         action_x = target_x - xinit_pos
-        next_action = np.array([action_x[0], action_x[1], action_x[2], self.grip_action])
+        next_action = np.array([action_x[0], action_x[1], action_x[2], 0, 0, 0, 0,
+                                self.grip_action])  # Zeros describe the non handled Rotational Control of MPC
 
         info = {
             'exitflag': exitflag, 'horizon': model.N,
