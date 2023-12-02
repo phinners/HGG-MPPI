@@ -258,8 +258,8 @@ class FrankaFetchPickDynDoorObstaclesEnv(robot_env.RobotEnv, gym.utils.EzPickle)
             gripper_ctrl = -0.8
 
         pos_ctrl *= self.limit_action  # limit maximum change in position
-        rot_ctrl *= self.limit_action  # limit maximum change in position
-        # rot_ctrl = [0, 1., 0., 0.]  # fixed rotation of the end effector, expressed as a quaternion
+        rot_ctrl = [0, 1., 0., 0.]  # fixed rotation of the end effector, expressed as a quaternion
+
         gripper_ctrl = np.array([gripper_ctrl, gripper_ctrl])
         assert gripper_ctrl.shape == (2,)
         if self.block_z:
@@ -302,22 +302,23 @@ class FrankaFetchPickDynDoorObstaclesEnv(robot_env.RobotEnv, gym.utils.EzPickle)
         else:
             achieved_goal = np.squeeze(object_pos.copy())
 
+        stat_obstacles = np.array(self.stat_obstacles)
+
         body_id = self.sim.model.body_name2id('obstacle')
         pos1 = np.array(self.sim.data.body_xpos[body_id].copy())
-        rot1 = np.array(self.sim.data.body_xquat[body_id].copy())
+        rot1 = np.array(self.sim.data.body_xquat[body_id].copy())  # Rotation of Obstacle included in OBS-Space!
         dims1 = self.dyn_door_obstacles[0][7:10]  # [[1.3, 0.60, 0.5, 1.0, 0.0, 0.0, 0.0, 0.03, 0.03,0.03]]
         ob1 = np.concatenate((pos1, rot1, dims1.copy()))
 
         dyn_obstacles = np.array([ob1])
 
         obs = np.concatenate([
-            grip_pos, grip_rot, object_pos.ravel(), object_rel_pos.ravel(), gripper_state, object_rot.ravel(),
+            grip_pos, grip_rot, robot_qpos, robot_qvel, object_pos.ravel(), object_rel_pos.ravel(), gripper_state,
+            object_rot.ravel(),
             object_velp.ravel(), object_velr.ravel(), grip_velp, gripper_vel
         ])
 
         obj_dist = np.linalg.norm(object_rel_pos.ravel())
-
-        stat_obstacles = np.array(self.stat_obstacles)
 
         return {
             'observation': obs.copy(),

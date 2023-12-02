@@ -1,7 +1,9 @@
-import ikpy.chain
+import math
+import os
+
 import numpy as np
+import pytorch_kinematics
 import torch
-from ikpy.utils import geometry
 from scipy.spatial.transform import Rotation
 
 collision = torch.zeros([500, ], dtype=torch.bool)
@@ -14,16 +16,17 @@ def getCollisions():
 def get_parameters(args):
     if args.tune_mppi <= 0:
         args.α = 0  # 5.94e-1
-        args.λ = 40  # 1.62e1
-        args.σ = 0.2  # 08  # 0.25  # 4.0505  # 10.52e1
-        args.χ = 2.00e-2
-        args.ω1 = 15.37
+        args.λ = 60  # 40  # 1.62e1
+        args.σ = 0.201  # 0.01  # 08  # 0.25  # 4.0505  # 10.52e1
+        args.χ = 0.0  # 2.00e-2
+        args.ω1 = 9.16e3
         args.ω2 = 9.16e3
         args.ω_Φ = 5.41
 
     K = 500
     T = 10
     Δt = 0.01
+    T_system = 0.01
 
     dtype = torch.double
     device = 'cpu'  # 'cuda'
@@ -31,60 +34,124 @@ def get_parameters(args):
     α = args.α
     λ = args.λ
     Σ = args.σ * torch.tensor([
-        [1, args.χ, args.χ],
-        [args.χ, 1, args.χ],
-        [args.χ, args.χ, 1]
+        [1.5, args.χ, args.χ, args.χ, args.χ, args.χ, args.χ],
+        [args.χ, 0.75, args.χ, args.χ, args.χ, args.χ, args.χ],
+        [args.χ, args.χ, 1.0, args.χ, args.χ, args.χ, args.χ],
+        [args.χ, args.χ, args.χ, 1.25, args.χ, args.χ, args.χ],
+        [args.χ, args.χ, args.χ, args.χ, 1.50, args.χ, args.χ],
+        [args.χ, args.χ, args.χ, args.χ, args.χ, 2.00, args.χ],
+        [args.χ, args.χ, args.χ, args.χ, args.χ, args.χ, 2.00]
     ], dtype=dtype, device=device)
 
+    # Ensure we get the path separator correct on windows
+    MODEL_URDF_PATH = os.path.join(os.getcwd(), 'envs', 'assets', 'fetch', 'franka_panda_arm.urdf')
+
+    xml = bytes(bytearray(open(MODEL_URDF_PATH).read(), encoding='utf-8'))
+    dtype_kinematics = torch.double
+    chain = pytorch_kinematics.build_serial_chain_from_urdf(xml, end_link_name="panda_link8",
+                                                            root_link_name="panda_link0")
+    chain = chain.to(dtype=dtype_kinematics, device=device)
+
+    # Translational offset of Robot into World Coordinates
+    robot_base_pos = torch.tensor([0.8, 0.75, 0.44],
+                                  device=device, dtype=dtype_kinematics)
+
+    link_dimensions = {
+        'panda_link0': torch.tensor([0.0, 0.0, 0.333], dtype=dtype_kinematics),
+        # 'panda_link1': torch.tensor([0.0, 0.0, 0.000], dtype=dtype_kinematics),
+        # Delete from Calculation for Computational Speed
+        'panda_link2': torch.tensor([0.0, -0.316, 0.0], dtype=dtype_kinematics),
+        'panda_link3': torch.tensor([0.0825, 0.0, 0.0], dtype=dtype_kinematics),
+        'panda_link4': torch.tensor([-0.0825, 0.384, 0.0], dtype=dtype_kinematics),
+        # 'panda_link5': torch.tensor([0.0, 0.0, 0.0], dtype=dtype_kinematics),
+        # Delete from Calculation for Computational Speed
+        'panda_link6': torch.tensor([0.088, 0.0, 0.0], dtype=dtype_kinematics),
+        'panda_link7': torch.tensor([0.0, 0.0, 0.245], dtype=dtype_kinematics)
+        # 'panda_link8': torch.tensor([0.0, 0.0, 0.0], dtype=dtype_kinematics)
+        # Delete from Calculation for Computational Speed
+    }
+
+    def calculate_link_verticies(links):
+        link_verticies = {}
+        for link_key in links:
+            link = links[link_key]
+            length = torch.norm(link)  # Calculate Length of Link in all Dimensions
+            points_distance = 0.03
+            points_count = math.ceil(length / points_distance)
+            points = torch.zeros((points_count, 3))
+            for i in range(points_count):
+                points[i, :] = torch.tensor([(link[0] / points_count) * i,
+                                             (link[1] / points_count) * i,
+                                             (link[2] / points_count) * i], dtype=torch.float64)
+            link_verticies[link_key] = points
+        return link_verticies
+
+    link_verticies = calculate_link_verticies(link_dimensions)
+
     def dynamics(x, u):
-        u[:, 2] = 0  # No Z-Movement
-        x[:, 5] = 0  # No Z-Movement
-        pt1_vel = u * (1 - torch.exp(torch.tensor(-0.01 / 0.1)))
-        new_vel = x[:, 3:6] + u  # * Δt  # + pt1_vel
-        new_vel = torch.clamp(new_vel, min=-1.7, max=1.7)
-        # evtl noch die halbe zusätzliche neue Velocity dazuaddieren
-        new_pos = x[:, 0:3] + new_vel * Δt  # + 0.5 * u * Δt * Δt  # new_vel * Δt  # + (pt1_vel / 2) * Δt
-        # new_pos[:, 0] = torch.clamp(new_pos[:, 0], 0.8, 1.5)
-        # new_pos[:, 2] = torch.clamp(new_pos[:, 2], 0.0, 0.6)
+
+        new_vel = x[:, 7:14] + u
+
+        # new_vel[:, 0] = torch.clamp(new_vel[:, 0], min=-2.1750, max=2.1750)  # Limit Joint Velocities
+        # new_vel[:, 1] = torch.clamp(new_vel[:, 1], min=-2.1750, max=2.1750)  # Limit Joint Velocities
+        # new_vel[:, 2] = torch.clamp(new_vel[:, 2], min=-2.1750, max=2.1750)  # Limit Joint Velocities
+        # new_vel[:, 3] = torch.clamp(new_vel[:, 3], min=-2.1750, max=2.1750)  # Limit Joint Velocities
+        # new_vel[:, 4] = torch.clamp(new_vel[:, 4], min=-2.6100, max=2.6100)  # Limit Joint Velocities
+        # new_vel[:, 5] = torch.clamp(new_vel[:, 5], min=-2.6100, max=2.6100)  # Limit Joint Velocities
+        # new_vel[:, 6] = torch.clamp(new_vel[:, 6], min=-2.6100, max=2.6100)  # Limit Joint Velocities
+
+        new_pos = x[:, 0:7] + new_vel * Δt
+
+        # new_pos[:, 0] = torch.clamp(new_pos[:, 0], min=-2.8973, max=2.8973)  # Limit Joint Positions
+        # new_pos[:, 1] = torch.clamp(new_pos[:, 1], min=-1.7628, max=1.7628)  # Limit Joint Positions
+        # new_pos[:, 2] = torch.clamp(new_pos[:, 2], min=-2.8973, max=2.8973)  # Limit Joint Positions
+        # new_pos[:, 3] = torch.clamp(new_pos[:, 3], min=-3.0718, max=-0.0698)  # Limit Joint Positions
+        # new_pos[:, 4] = torch.clamp(new_pos[:, 4], min=-2.8973, max=2.8973)  # Limit Joint Positions
+        # new_pos[:, 5] = torch.clamp(new_pos[:, 5], min=-0.0175, max=3.7525)  # Limit Joint Positions
+        # new_pos[:, 6] = torch.clamp(new_pos[:, 6], min=-2.8973, max=2.8973)  # Limit Joint Positions
 
         return torch.cat((new_pos, new_vel), dim=1)
 
-    def joint_collision_calculation(state, obstacles):
-        my_chain = ikpy.chain.Chain.from_urdf_file(urdf_file="franka_panda_description/robots/panda_arm.urdf",
-                                                   base_elements=["panda_link0"])
-        cost = torch.zeros([500, ], dtype=torch.float)
-        # 'robot0_joint1': -2.24,
-        # 'robot0_joint2': -0.038,
-        # 'robot0_joint3': 2.55,
-        # 'robot0_joint4': -2.68,
-        # 'robot0_joint5': 0.0,
-        # 'robot0_joint6': 0.984,
-        # 'robot0_joint7': 0.0327,
-        nodes = []
-        target_orientation = [0.0, 0.0, 1.0]
-        initial_joint_pos = [0.0, -2.24, -0.038, 2.55, -2.68, 0.0, 0.984, 0.0327, 0.0]
-        for target_position in state[:, 0:3]:
-            inverse = my_chain.inverse_kinematics(target_position.numpy(), target_orientation, orientation_mode="X",
-                                                  initial_position=initial_joint_pos)
-            real_frame = my_chain.forward_kinematics(inverse, full_kinematics=True)
-            # Get the nodes and the orientation from the transformation matrix
-            for (index, link) in enumerate(my_chain.links):
-                (node, orientation) = geometry.from_transformation_matrix(real_frame[index])
+    def joint_collision_calculation(link_transform, link_verticies, obstacle_pos, obstacle_dim):
 
-                # Add node corresponding to the link
-                # nodes.append(node)
+        transformed_link0 = link_transform.transform_points(link_verticies.to(torch.float64))
+        transformed_link0 += robot_base_pos  # Translate Link into World Coordinates
+
+        closest_point = torch.clamp(transformed_link0, min=obstacle_pos - obstacle_dim, max=obstacle_pos + obstacle_dim)
+        dist = torch.norm(transformed_link0 - closest_point, dim=2)
+
+        collision_link_segments = torch.le(dist, torch.tensor(
+            [0.12]))  # 0.1 Freespace From Obstacle to Center of Link --> Link Dimensions included here!
+
+        collision = torch.any(collision_link_segments, dim=1)
+
+        if torch.any(collision):
+            # print("Link Trajectorie with collision detected!")
             pass
-        return cost
+
+        if torch.all(collision):
+            # print("All Link Trajectorie with collision detected!")
+            pass
+
+        return collision
 
     def state_cost(x, goal, obstacles):
         global collision
 
-        cost = 1000 * torch.norm((x[:, 0:3] - goal), dim=1) ** 2
+        joint_values = x[:, 0:7]
+        ret = chain.forward_kinematics(joint_values, end_only=False)
+
+        link8_matrix = ret['panda_link8'].get_matrix()  # Equals to panda0_gripper Bode in Mujoco File
+        link8_pos = link8_matrix[:, :3, 3] + robot_base_pos  # Equals to panda0_gripper Bode in Mujoco File
+
+        goal_dist = torch.norm((link8_pos - goal), dim=1)
+        cost = 1000 * goal_dist ** 2
+
         # cost -= args.ω1 * torch.norm(x[:, 3:6], dim=1) ** 2
 
         # Calculate Transformed State to get the correct result
         r = Rotation.from_quat([np.roll(obstacles[3:7], -1)])
-        x_translated = x[:, 0:3] - obstacles[0:3]
+        x_translated = link8_pos - obstacles[0:3]
 
         state_transformed_obs1 = torch.matmul(torch.tensor(np.squeeze(r.inv().as_matrix())),
                                               x_translated.transpose(0, 1)).transpose(0, 1)
@@ -97,37 +164,44 @@ def get_parameters(args):
                                                             [0.055, 0.055, 0.03])),
                                                dim=1))
 
-        # Obstacle 2
-        dist2 = torch.abs(x[:, 0:3] - torch.tensor(obstacles[10:13], device=device))
-        collision = torch.logical_or(collision,
-                                     torch.all(torch.le(dist2,
-                                                        torch.tensor(obstacles[17:20], device=device)
-                                                        + torch.tensor(
-                                                            [0.055, 0.055, 0.03])),
-                                               dim=1))
+        # Obstacles 2
+        for link_key in link_verticies:
+            link_vertics = link_verticies[link_key]
+            link_transform = ret[link_key]
 
-        # Obstacle 3
-        dist3 = torch.abs(x[:, 0:3] - torch.tensor(obstacles[20:23], device=device))
-        collision = torch.logical_or(collision,
-                                     torch.all(torch.le(dist3,
-                                                        torch.tensor(obstacles[27:30], device=device)
-                                                        + torch.tensor(
-                                                            [0.055, 0.055, 0.03])),
-                                               dim=1))
+            link_collisions = joint_collision_calculation(link_transform, link_vertics,
+                                                          torch.tensor(obstacles[10:13], device=device),
+                                                          torch.tensor(obstacles[17:20], device=device))
+
+            collision = torch.logical_or(collision,
+                                         link_collisions)
+
+        # Obstacles 3
+        for link_key in link_verticies:
+            link_vertics = link_verticies[link_key]
+            link_transform = ret[link_key]
+
+            link_collisions = joint_collision_calculation(link_transform, link_vertics,
+                                                          torch.tensor(obstacles[20:23], device=device),
+                                                          torch.tensor(obstacles[27:30], device=device))
+
+            collision = torch.logical_or(collision,
+                                         link_collisions)
 
         if torch.any(collision):
             # print("Trajectorie with collision detected!")
             pass
 
         if torch.all(collision):
-            print("All Trajectorie with collision detected!")
+            # print("All Trajectorie with collision detected!")
             pass
 
-        table_collision = torch.le(x[:, 2], 0.3)
+        table_collision = torch.le(link8_pos[:, 2], 0.45)
 
         # cost += joint_collision_calculation(x, obstacles)
-        cost += 100 * table_collision
+        cost += args.ω1 * table_collision
         cost += args.ω2 * collision
+        collision = torch.zeros([500, ], dtype=torch.bool)
         return cost
 
     def terminal_cost(x, goal):

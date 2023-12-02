@@ -66,14 +66,15 @@ class FrankaFetchPickDynObstaclesEnv(robot_env.RobotEnv, gym.utils.EzPickle):
         self.dyn_obstacles_geom_names = ['obstacle:geom', 'obstacle2:geom']
         self.stat_obstacles_geom_names = []
         self.stat_obstacles = []
-        self.dyn_obstacles = [[1.3, 0.60, 0.435, 0.03, 0.03, 0.03], [1.3, 0.80, 0.435, 0.12, 0.03, 0.03]]
+        self.dyn_obstacles = [[1.3, 0.60, 0.435, 1.0, 0.0, 0.0, 0.0, 0.03, 0.03, 0.03],
+                              [1.3, 0.80, 0.435, 1.0, 0.0, 0.0, 0.0, 0.12, 0.03, 0.03]]
 
         self.obstacles = self.dyn_obstacles + self.stat_obstacles
         self.obstacles_geom_names = self.dyn_obstacles_geom_names + self.stat_obstacles_geom_names
         self.block_max_z = 0.53
 
         super(FrankaFetchPickDynObstaclesEnv, self).__init__(
-            model_path=model_path, n_substeps=n_substeps, n_actions=4,
+            model_path=model_path, n_substeps=n_substeps, n_actions=8,
             initial_qpos=initial_qpos)
 
         gym.utils.EzPickle.__init__(self)
@@ -105,8 +106,8 @@ class FrankaFetchPickDynObstaclesEnv(robot_env.RobotEnv, gym.utils.EzPickle):
 
         # assume all obstacles are moving vertically
         for obst in self.obstacles:
-            up = self.field[0] + self.field[3] - obst[3]
-            lw = self.field[0] - self.field[3] + obst[3]
+            up = self.field[0] + self.field[3] - obst[7]
+            lw = self.field[0] - self.field[3] + obst[7]
             self.obstacle_upper_limits.append(up)
             self.obstacle_lower_limits.append(lw)
             self.pos_difs.append((up - lw) / 2.)
@@ -193,15 +194,16 @@ class FrankaFetchPickDynObstaclesEnv(robot_env.RobotEnv, gym.utils.EzPickle):
     #     self.sim.forward()
 
     def _set_action(self, action):
-        assert action.shape == (4,)
+        assert action.shape == (8,)
         action = action.copy()  # ensure that we don't change the action outside of this scope
-        pos_ctrl, gripper_ctrl = action[:3], action[3]
+        pos_ctrl, rot_ctrl, gripper_ctrl = action[:3], action[3:7], action[7]
 
         if self.block_gripper:
             gripper_ctrl = -0.8
 
         pos_ctrl *= self.limit_action  # limit maximum change in position
         rot_ctrl = [0, 1., 0., 0.]  # fixed rotation of the end effector, expressed as a quaternion
+
         gripper_ctrl = np.array([gripper_ctrl, gripper_ctrl])
         assert gripper_ctrl.shape == (2,)
         if self.block_z:
@@ -214,7 +216,8 @@ class FrankaFetchPickDynObstaclesEnv(robot_env.RobotEnv, gym.utils.EzPickle):
 
     def _get_obs(self):
         # positions
-        grip_pos = self.sim.data.get_site_xpos('grip_site')
+        grip_pos = self.sim.data.get_body_xpos('eef')  # self.sim.data.get_site_xpos('grip_site')
+        grip_rot = self.sim.data.get_body_xquat('eef')
         dt = self.sim.nsubsteps * self.sim.model.opt.timestep
         grip_velp = self.sim.data.get_site_xvelp('grip_site') * dt
         robot_qpos, robot_qvel = utils.robot_get_obs(self.sim)
@@ -240,18 +243,21 @@ class FrankaFetchPickDynObstaclesEnv(robot_env.RobotEnv, gym.utils.EzPickle):
 
         body_id = self.sim.model.body_name2id('obstacle')
         pos1 = np.array(self.sim.data.body_xpos[body_id].copy())
+        rot1 = np.array(self.sim.data.body_xquat[body_id].copy())
         dims1 = self.dyn_obstacles[0][3:6]
-        ob1 = np.concatenate((pos1, dims1.copy()))
+        ob1 = np.concatenate((pos1, rot1, dims1.copy()))
 
         body_id = self.sim.model.body_name2id('obstacle2')
         pos2 = np.array(self.sim.data.body_xpos[body_id].copy())
+        rot2 = np.array(self.sim.data.body_xquat[body_id].copy())
         dims2 = self.dyn_obstacles[1][3:6]
-        ob2 = np.concatenate((pos2, dims2.copy()))
+        ob2 = np.concatenate((pos2, rot2, dims2.copy()))
 
         dyn_obstacles = np.array([ob1, ob2])
 
         obs = np.concatenate([
-            grip_pos, object_pos.ravel(), object_rel_pos.ravel(), gripper_state, object_rot.ravel(),
+            grip_pos, grip_rot, robot_qpos, robot_qvel, object_pos.ravel(), object_rel_pos.ravel(), gripper_state,
+            object_rot.ravel(),
             object_velp.ravel(), object_velr.ravel(), grip_velp, gripper_vel
         ])
 
@@ -327,12 +333,12 @@ class FrankaFetchPickDynObstaclesEnv(robot_env.RobotEnv, gym.utils.EzPickle):
         # stop rectangle obstacle
         self.current_obstacle_vels[1] = 0.00001
 
-        print("Directions")
-        print(directions)
-        print("Obstacle Shifts")
-        print(self.current_obstacle_shifts)
-        print("Obstacle Vels")
-        print(self.current_obstacle_vels)
+        # print("Directions")
+        # print(directions)
+        # print("Obstacle Shifts")
+        # print(self.current_obstacle_shifts)
+        # print("Obstacle Vels")
+        # print(self.current_obstacle_vels)
         self._move_obstacles(t=self.sim.get_state().time)  # move obstacles to the initial positions
 
         self.sim.forward()
@@ -345,8 +351,8 @@ class FrankaFetchPickDynObstaclesEnv(robot_env.RobotEnv, gym.utils.EzPickle):
         goal[0] += self.np_random.uniform(-self.target_range_x, self.target_range_x)
         # goal[0] = 1.1415421  # TODO For Reproduction Purpose
         # goal[1] = 0.45886902  # TODO For Reproduction Purpose
-        print("Goal:")
-        print(goal)
+        # print("Goal:")
+        # print(goal)
         return goal.copy()
 
     def _is_success(self, achieved_goal, desired_goal):
@@ -362,7 +368,7 @@ class FrankaFetchPickDynObstaclesEnv(robot_env.RobotEnv, gym.utils.EzPickle):
         # initial markers (index 3 is arbitrary)
         self.target_center = self.sim.data.get_site_xpos('target_center')
         self.init_center = self.sim.data.get_site_xpos('init_center')
-        sites_offset = (self.sim.data.site_xpos - self.sim.model.site_pos).copy()[3]
+        sites_offset = (self.sim.data.site_xpos - self.sim.model.site_pos).copy()[6]
 
         # Move end effector into position.
         gripper_target = self.init_center + self.gripper_extra_height  # + self.sim.data.get_site_xpos('robot0:grip')
