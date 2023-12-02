@@ -41,9 +41,9 @@ class MPCControlGoalEnv(VanillaGoalEnv):
     def _extend_reward(self, reward, obs):
         new_reward = reward
         if obs['collision_check']:
-            new_reward = -4.0
+            new_reward = -400.0
         if obs['object_dis'] > self.obj_distance_threshold:
-            new_reward = -10.0  # object is no more in the grip
+            new_reward = -1000.0  # object is no more in the grip
 
         self.total_reward += new_reward
 
@@ -118,7 +118,7 @@ class MPCControlGoalEnv(VanillaGoalEnv):
         action = np.clip(rl_action, self.action_space.low, self.action_space.high)
         pos_ctrl, rot_ctrl, gripper_ctrl = action[0:3], action[3:7], action[7]
 
-        pos_ctrl *= 0.08  # 0.018  # 0.022  # limit maximum change in position
+        pos_ctrl *= 0.05  # 0.018  # 0.022  # limit maximum change in position
 
         sub_goal = grip_pos + pos_ctrl
 
