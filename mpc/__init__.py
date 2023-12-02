@@ -1,4 +1,5 @@
 from .mpc_common import extract_parameters, make_obs, get_args
+from .pick_3d_target_obstacle import generate_pathplanner
 from .pick_dyn_door_obstacles import generate_pathplanner
 from .pick_dyn_lifted_obstacles import generate_pathplanner
 from .pick_dyn_obstacles import generate_pathplanner
@@ -21,6 +22,7 @@ def make_mpc(args):
         'FrankaFetchPickDynDoorObstaclesEnv-v1': pick_dyn_door_obstacles,
         'FrankaFetchPickDynObstaclesMaxEnv-v1': pick_dyn_obstacles,
         'FrankaFetchPickDynLiftedObstaclesEnv-v1': pick_dyn_lifted_obstacles,
+        'FrankaFetchPick3DTargetObstacle-v1': pick_3d_target_obstacle
     }
 
     return a[args.env].generate_pathplanner(create=args.mpc_gen, path=args.mpc_path)

@@ -38,7 +38,7 @@
 
         <body pos="1.4 0.75 0.2" name="table0">
             <geom size="0.35 0.55 0.2" type="box" mass="2000" material="table_mat"></geom>
-            <site name="target_center" pos="-0.1 -0.48 0.7" size="0.02 0.02 0.02" rgba="0 0 1 0" type="sphere"></site>
+            <site name="target_center" pos="0.0 -0.48 0.5" size="0.02 0.02 0.02" rgba="0 0 1 0" type="sphere"></site>
             <site name="init_center" pos="0 0.45 0.2" size="0.02 0.02 0.02" rgba="0 0 1 0" type="sphere"></site>
 
             <site name="init_1" pos="-1.875 0.45 0.2" size="0.02 0.02 0.02" rgba="0 1 0 0.1" type="sphere"></site>
@@ -65,12 +65,15 @@
 
         </body>
 
-        <body pos="1.5 0.60 0.555" name="obstacle1">
+        <body pos="1.10 0.50 0.805" name="obstacle1">
             <!--limited="true" range="-.05 .05"  damping='0.01' armature='0' frictionloss='0.1'-->
-            <geom name="obstacle1:geom" pos="0 0 0" size="0.25 0.03 0.15" type="box" rgba="0 1 1 1" mass="2000"
+            <geom name="obstacle1:geom" pos="0 0 0" size="0.03 0.03 0.30" type="box" rgba="0 0 1 1" mass="2000"
                   material="table_mat"></geom>
-            <site name="safe1:site" pos="0 0 0.01" size="0.28 0.078 0.04" rgba="1 0 0 0.15" type="box"></site>
+            <joint name="obstacle1:joint" type="slide" axis="0 1 0" limited="true" damping="0.01" range="-.25 .25"
+                   margin="0.03"></joint>
         </body>
+
+
         <!--
                 <body pos="1.1 0.90 0.9" name="obstacle2">
                     <geom name="obstacle2:geom" pos="0 0 0" size="0.03 0.03 0.06" type="box" rgba="0 1 1 1" mass="2000"
