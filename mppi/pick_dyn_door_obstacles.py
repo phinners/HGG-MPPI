@@ -4,6 +4,7 @@ import os
 import numpy as np
 import pytorch_kinematics
 import torch
+from pytorch3d.transforms import quaternion_to_matrix, Transform3d
 from scipy.spatial.transform import Rotation
 
 collision = torch.zeros([500, ], dtype=torch.bool)
@@ -26,7 +27,7 @@ def get_parameters(args):
     K = 500
     T = 10
     Δt = 0.01
-    T_system = 0.01
+    T_system = 0.011
 
     dtype = torch.double
     device = 'cpu'  # 'cuda'
@@ -112,13 +113,23 @@ def get_parameters(args):
 
         return torch.cat((new_pos, new_vel), dim=1)
 
-    def joint_collision_calculation(link_transform, link_verticies, obstacle_pos, obstacle_dim):
+    def joint_collision_calculation(link_transform, link_verticies, obstacle_pos, obstacle_rot, obstacle_dim):
 
-        transformed_link0 = link_transform.transform_points(link_verticies.to(torch.float64))
-        transformed_link0 += robot_base_pos  # Translate Link into World Coordinates
+        transformed_link = link_transform.transform_points(link_verticies.to(torch.float64))
+        transformed_link += robot_base_pos  # Translate Link into World Coordinates
 
-        closest_point = torch.clamp(transformed_link0, min=obstacle_pos - obstacle_dim, max=obstacle_pos + obstacle_dim)
-        dist = torch.norm(transformed_link0 - closest_point, dim=2)
+        # Translate into Obstacle Coordinate System
+        transformed_link_translated = transformed_link - obstacle_pos
+
+        obstacle_rot_quaternion = torch.roll(obstacle_rot, -1)
+        transform_obstacle = Transform3d().rotate(quaternion_to_matrix(obstacle_rot_quaternion)).to(
+            device='cpu',
+            dtype=torch.float64)
+        # Calculate Transformed State to get the correct result
+        transformed_points = transform_obstacle.transform_points(transformed_link_translated)
+
+        closest_point = torch.clamp(transformed_points, min=-obstacle_dim, max=obstacle_dim)
+        dist = torch.norm(transformed_points - closest_point, dim=2)
 
         collision_link_segments = torch.le(dist, torch.tensor(
             [0.12]))  # 0.1 Freespace From Obstacle to Center of Link --> Link Dimensions included here!
@@ -144,6 +155,8 @@ def get_parameters(args):
         link8_matrix = ret['panda_link8'].get_matrix()  # Equals to panda0_gripper Bode in Mujoco File
         link8_pos = link8_matrix[:, :3, 3] + robot_base_pos  # Equals to panda0_gripper Bode in Mujoco File
 
+        dist_robot_base = torch.norm(link8_pos - robot_base_pos, dim=1)
+
         goal_dist = torch.norm((link8_pos - goal), dim=1)
         cost = 1000 * goal_dist ** 2
 
@@ -164,29 +177,20 @@ def get_parameters(args):
                                                             [0.055, 0.055, 0.03])),
                                                dim=1))
 
-        # Obstacles 2
-        for link_key in link_verticies:
-            link_vertics = link_verticies[link_key]
-            link_transform = ret[link_key]
-
-            link_collisions = joint_collision_calculation(link_transform, link_vertics,
-                                                          torch.tensor(obstacles[10:13], device=device),
-                                                          torch.tensor(obstacles[17:20], device=device))
-
-            collision = torch.logical_or(collision,
-                                         link_collisions)
-
-        # Obstacles 3
-        for link_key in link_verticies:
-            link_vertics = link_verticies[link_key]
-            link_transform = ret[link_key]
-
-            link_collisions = joint_collision_calculation(link_transform, link_vertics,
-                                                          torch.tensor(obstacles[20:23], device=device),
-                                                          torch.tensor(obstacles[27:30], device=device))
-
-            collision = torch.logical_or(collision,
-                                         link_collisions)
+        dist2EEF = torch.abs(link8_pos - torch.tensor(obstacles[10:13], device=device))
+        dist3EEF = torch.abs(link8_pos - torch.tensor(obstacles[20:23], device=device))
+        collision = torch.logical_or(collision,
+                                     torch.all(
+                                         torch.le(dist2EEF,
+                                                  torch.tensor(obstacles[17:20],
+                                                               device=device) + torch.tensor(
+                                                      [0.055, 0.055, 0.03])),
+                                         dim=1))
+        collision = torch.logical_or(collision,
+                                     torch.all(torch.le(dist3EEF,
+                                                        torch.tensor(obstacles[27:30], device=device) + torch.tensor(
+                                                            [0.055, 0.055, 0.03])),
+                                               dim=1))
 
         if torch.any(collision):
             # print("Trajectorie with collision detected!")
@@ -196,25 +200,41 @@ def get_parameters(args):
             # print("All Trajectorie with collision detected!")
             pass
 
-        table_collision = torch.le(link8_pos[:, 2], 0.45)
-
+        table_collision = torch.le(link8_pos[:, 2], 0.40)
+        workspace_costs = torch.ge(dist_robot_base, 0.8)
         # cost += joint_collision_calculation(x, obstacles)
         cost += args.ω1 * table_collision
+        cost += args.ω2 * workspace_costs
         cost += args.ω2 * collision
         collision = torch.zeros([500, ], dtype=torch.bool)
         return cost
 
     def terminal_cost(x, goal):
         global collision
-        cost = 10 * torch.norm((x[:, 0:3] - goal), dim=1) ** 2
-        cost += args.ω_Φ * torch.norm(x[:, 3:6], dim=1) ** 2
+        joint_values = x[:, 0:7]
+        ret = chain.forward_kinematics(joint_values, end_only=True)
+
+        eef_pos = ret.get_matrix()[:, :3, 3] + robot_base_pos
+        cost = 10 * torch.norm((eef_pos - goal), dim=1) ** 2
+        # cost += args.ω_Φ * torch.norm(x[:, 3:6], dim=1) ** 2
         collision = torch.zeros([500, ], dtype=torch.bool)
         return cost
 
     def convert_to_target(x, u):
-        new_vel = x[3:6] + u / (1 - torch.exp(torch.tensor(-0.01 / 0.100)))  # 0.175
-        new_vel[2] = 0  # Block Z-Movement
-        target_pos = x[0:3] + new_vel * Δt
-        return x[0:3] + new_vel * Δt  # + u * Δt  # x[3:6] * Δt
+        joint_pos = x[0:7]
+        joint_vel = x[7:14]
+        new_vel = joint_vel + u / (
+                1 - torch.exp(torch.tensor(-Δt / T_system)) * (
+                1 + (Δt / T_system)))  # / (1 - torch.exp(torch.tensor(-0.01 / 0.150)))  # 0.175
+
+        new_joint_pos = joint_pos + new_vel * Δt  # Calculate new Target Joint Positions
+
+        # Calculate World Coordinate Target Position
+        ret = chain.forward_kinematics(new_joint_pos, end_only=True)
+        eef_matrix = ret.get_matrix()
+        eef_pos = eef_matrix[:, :3, 3] + robot_base_pos  # Calculate World Coordinate Target
+        eef_rot = pytorch_kinematics.matrix_to_quaternion(eef_matrix[:, :3, :3])
+
+        return torch.cat((eef_pos, eef_rot), dim=1)
 
     return K, T, Δt, α, dynamics, state_cost, terminal_cost, Σ, λ, convert_to_target, dtype, device

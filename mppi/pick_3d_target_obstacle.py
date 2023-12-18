@@ -3,6 +3,7 @@ import os
 
 import pytorch_kinematics
 import torch
+from pytorch3d.transforms import quaternion_to_matrix, Transform3d
 
 collision = torch.zeros([500, ], dtype=torch.bool)
 
@@ -110,13 +111,23 @@ def get_parameters(args):
 
         return torch.cat((new_pos, new_vel), dim=1)
 
-    def joint_collision_calculation(link_transform, link_verticies, obstacle_pos, obstacle_dim):
+    def joint_collision_calculation(link_transform, link_verticies, obstacle_pos, obstacle_rot, obstacle_dim):
 
-        transformed_link0 = link_transform.transform_points(link_verticies.to(torch.float64))
-        transformed_link0 += robot_base_pos  # Translate Link into World Coordinates
+        transformed_link = link_transform.transform_points(link_verticies.to(torch.float64))
+        transformed_link += robot_base_pos  # Translate Link into World Coordinates
 
-        closest_point = torch.clamp(transformed_link0, min=obstacle_pos - obstacle_dim, max=obstacle_pos + obstacle_dim)
-        dist = torch.norm(transformed_link0 - closest_point, dim=2)
+        # Translate into Obstacle Coordinate System
+        transformed_link_translated = transformed_link - obstacle_pos
+
+        obstacle_rot_quaternion = torch.roll(obstacle_rot, -1)
+        transform_obstacle = Transform3d().rotate(quaternion_to_matrix(obstacle_rot_quaternion)).to(
+            device='cpu',
+            dtype=torch.float64)
+        # Calculate Transformed State to get the correct result
+        transformed_points = transform_obstacle.transform_points(transformed_link_translated)
+
+        closest_point = torch.clamp(transformed_points, min=-obstacle_dim, max=obstacle_dim)
+        dist = torch.norm(transformed_points - closest_point, dim=2)
 
         collision_link_segments = torch.le(dist, torch.tensor(
             [0.12]))  # 0.1 Freespace From Obstacle to Center of Link --> Link Dimensions included here!
@@ -146,14 +157,15 @@ def get_parameters(args):
         cost = 1000 * goal_dist ** 2
         # cost -= args.ω1 * torch.norm(x[:, 3:6], dim=1) ** 2
 
-        # Obstacles
+        # Joint Collision Avoidance
         for link_key in link_verticies:
             link_vertics = link_verticies[link_key]
             link_transform = ret[link_key]
 
             link_collisions = joint_collision_calculation(link_transform, link_vertics,
                                                           torch.tensor(obstacles[0:3], device=device),
-                                                          torch.tensor(obstacles[3:6], device=device))
+                                                          torch.tensor(obstacles[3:7], device=device),
+                                                          torch.tensor(obstacles[7:10], device=device))
 
             collision = torch.logical_or(collision,
                                          link_collisions)
@@ -200,7 +212,7 @@ def get_parameters(args):
         eef_pos = eef_matrix[:, :3, 3] + robot_base_pos  # Calculate World Coordinate Target
         eef_rot = pytorch_kinematics.matrix_to_quaternion(eef_matrix[:, :3, :3])
 
-        return torch.concatenate((eef_pos, eef_rot), dim=1)
+        return torch.cat((eef_pos, eef_rot), dim=1)
         # return u
 
     return K, T, Δt, α, dynamics, state_cost, terminal_cost, Σ, λ, convert_to_target, dtype, device
