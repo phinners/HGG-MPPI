@@ -118,7 +118,7 @@ def inequality_constraints(z, p):
     translated[1, 0] = p_y - y_o1
     translated[2, 0] = p_z - z_o1
 
-    distance_o1 = r.inv().as_matrix() @ translated
+    distance_o1 = r.as_matrix() @ translated
 
     xp1 = casadi.fabs(distance_o1[0]) / dx_o1
     yp1 = casadi.fabs(distance_o1[1]) / dy_o1
@@ -186,7 +186,7 @@ def generate_pathplanner(create=True, path=''):
     # -----------------
 
     # Set solver options
-    codeoptions = forcespro.CodeOptions('FORCESNLPsolverDynDoor1')
+    codeoptions = forcespro.CodeOptions('FORCESNLPsolverDynDoorObstacle1')
     codeoptions.maxit = 200  # Maximum number of iterations
     codeoptions.printlevel = 0
     codeoptions.optlevel = 0  # 0 no optimization, 1 optimize for size,
@@ -212,7 +212,7 @@ def generate_pathplanner(create=True, path=''):
     if create:
         solver = model.generate_solver(options=codeoptions)
     else:
-        solver = forcespro.nlp.Solver.from_directory(path + "FORCESNLPsolverDynDoor1")
+        solver = forcespro.nlp.Solver.from_directory(path + "FORCESNLPsolverDynDoorObstacle1")
 
     return model, solver, codeoptions
 

@@ -19,12 +19,12 @@ from mpc.mpc_common import extract_parameters, make_obs, get_args
 def continuous_dynamics(x, u, p):
     # calculate dx/dt
     return casadi.vertcat(x[3],
-        x[4],
-        0,
-        u[0],
-        u[1],
-        0
-    )
+                          x[4],
+                          0,
+                          u[0],
+                          u[1],
+                          0
+                          )
 
 
 def objective(z, p):
@@ -129,7 +129,7 @@ def generate_pathplanner(create=True, path=''):
     # -----------------
 
     # Set solver options
-    codeoptions = forcespro.CodeOptions('FORCESNLPsolver2')
+    codeoptions = forcespro.CodeOptions('FORCESNLPsolverDynObstacle1')
     codeoptions.maxit = 200  # Maximum number of iterations
     codeoptions.printlevel = 0
     codeoptions.optlevel = 0  # 0 no optimization, 1 optimize for size,
@@ -154,7 +154,7 @@ def generate_pathplanner(create=True, path=''):
     if create:
         solver = model.generate_solver(options=codeoptions)
     else:
-        solver = forcespro.nlp.Solver.from_directory(path + "FORCESNLPsolver2")
+        solver = forcespro.nlp.Solver.from_directory(path + "FORCESNLPsolverDynObstacle1")
 
     return model, solver, codeoptions
 
@@ -204,14 +204,14 @@ def main():
     done = False
 
     problem = {"x0": pred,
-        "xinit": xinit}
+               "xinit": xinit}
 
     # while not done:
     sim_timestep = 0
     for k in range(sim_length):
         # Set initial condition
         parameters = extract_parameters(goal, goal, t, dt, model.N, dyn_obstacles, vels, shifts, pos_difs,
-            stat_obstacles)
+                                        stat_obstacles)
         problem["all_parameters"] = np.reshape(parameters, (model.npar * model.N, 1))
 
         print('Solve ', k, problem["xinit"])
@@ -224,7 +224,7 @@ def main():
             exit()
 
         sys.stderr.write("FORCESPRO took {} iterations and {} seconds to solve the problem.\n" \
-            .format(info.it, info.solvetime))
+                         .format(info.it, info.solvetime))
 
         # Plot results
         # ------------

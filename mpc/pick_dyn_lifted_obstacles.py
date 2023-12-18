@@ -20,12 +20,12 @@ from mpc.mpc_common import extract_parameters, make_obs, get_args
 def continuous_dynamics(x, u, p):
     # calculate dx/dt
     return casadi.vertcat(x[3],
-        x[4],
-        x[5],
-        u[0],
-        u[1],
-        u[2]
-    )
+                          x[4],
+                          x[5],
+                          u[0],
+                          u[1],
+                          u[2]
+                          )
 
 
 def objective(z, p):
@@ -146,7 +146,7 @@ def generate_pathplanner(create=True, path=''):
     # -----------------
 
     # Set solver options
-    codeoptions = forcespro.CodeOptions('FORCESNLPsolver3')
+    codeoptions = forcespro.CodeOptions('FORCESNLPsolverDynLiftedObstacle1')
     codeoptions.maxit = 200  # Maximum number of iterations
     codeoptions.printlevel = 0
     codeoptions.optlevel = 0  # 0 no optimization, 1 optimize for size,
@@ -171,7 +171,7 @@ def generate_pathplanner(create=True, path=''):
     if create:
         solver = model.generate_solver(options=codeoptions)
     else:
-        solver = forcespro.nlp.Solver.from_directory(path + "FORCESNLPsolver3")
+        solver = forcespro.nlp.Solver.from_directory(path + "FORCESNLPsolverDynLiftedObstacle1")
 
     return model, solver, codeoptions
 
@@ -195,7 +195,7 @@ def main():
 
     stat_obstacles = [[1.3, 0.60, 0.435, 0.25, 0.03, 0.03]]
     dyn_obstacles = [[1.3, 0.10, 0.5, 0.03, 0.03, 0.03],
-        [1.14, 0.80, 0.465, 0.12, 0.03, 0.06]]
+                     [1.14, 0.80, 0.465, 0.12, 0.03, 0.06]]
 
     sim_length = 51
 
@@ -222,14 +222,14 @@ def main():
     done = False
 
     problem = {"x0": pred,
-        "xinit": xinit}
+               "xinit": xinit}
 
     # while not done:
     sim_timestep = 0
     for k in range(sim_length):
         # Set initial condition
         parameters = extract_parameters(goal, goal, t, dt, model.N, dyn_obstacles, vels, shifts, pos_difs,
-            stat_obstacles)
+                                        stat_obstacles)
         problem["all_parameters"] = np.reshape(parameters, (model.npar * model.N, 1))
 
         print('Solve ', k, problem["xinit"])
@@ -242,7 +242,7 @@ def main():
             exit()
 
         sys.stderr.write("FORCESPRO took {} iterations and {} seconds to solve the problem.\n" \
-            .format(info.it, info.solvetime))
+                         .format(info.it, info.solvetime))
 
         # Plot results
         # ------------

@@ -12,6 +12,7 @@ import forcespro
 import forcespro.nlp
 import matplotlib.pyplot as plt
 import numpy as np
+import spatial_casadi
 
 sys.path.append("../")
 from mpc.mpc_common import extract_parameters, make_obs, get_args
@@ -71,13 +72,32 @@ def inequality_constraints(z, p):
     y_o1 = p[7]
     z_o1 = p[8]
 
-    dx_o1 = p[9] + grip_w_x + 0.02
-    dy_o1 = p[10] + grip_w_y + 0.02
-    dz_o1 = p[11] + grip_w_z  # + 0.02
+    r_w_o1 = p[9]
+    r_x_o1 = p[10]
+    r_y_o1 = p[11]
+    r_z_o1 = p[12]
 
-    xp1 = casadi.fabs(p_x - x_o1) / dx_o1
-    yp1 = casadi.fabs(p_y - y_o1) / dy_o1
-    zp1 = casadi.fabs(p_z - z_o1) / dz_o1
+    dx_o1 = p[13] + grip_w_x + 0.02
+    dy_o1 = p[14] + grip_w_y + 0.02
+    dz_o1 = p[15] + grip_w_z  # + 0.02
+
+    quaternion = casadi.SX(4, 1)
+    quaternion[0, 0] = r_x_o1
+    quaternion[1, 0] = r_y_o1
+    quaternion[2, 0] = r_z_o1
+    quaternion[3, 0] = r_w_o1
+    r = spatial_casadi.Rotation.from_quat(quat=quaternion)
+
+    translated = casadi.SX(3, 1)
+    translated[0, 0] = p_x - x_o1
+    translated[1, 0] = p_y - y_o1
+    translated[2, 0] = p_z - z_o1
+
+    distance_o1 = r.as_matrix() @ translated
+
+    xp1 = casadi.fabs(distance_o1[0]) / dx_o1
+    yp1 = casadi.fabs(distance_o1[1]) / dy_o1
+    zp1 = casadi.fabs(distance_o1[2]) / dz_o1
 
     return casadi.vertcat(
         S(6, xp1, yp1, zp1) + u[3]  # obstacle 1
@@ -100,7 +120,7 @@ def generate_pathplanner(create=True, path=''):
     model.nvar = 10  # number of variables
     model.neq = 6  # number of equality constraints
     model.nh = 1  # number of nonlinear inequality constraints
-    model.npar = 6 + 6 * 1  # 6 * 3  # number of runtime parameters
+    model.npar = 6 + 10 * 1  # 6 * 3  # number of runtime parameters
 
     model.objective = objective
     model.objectiveN = objectiveN
@@ -113,8 +133,8 @@ def generate_pathplanner(create=True, path=''):
 
     # Inequality constraints
     #                   [ ax,     ay,    az,   relax         xPos,         yPos,          zPos    xVel, yVel, zVel]
-    model.lb = np.array([-30.0, -30.0, -30.0, 0, -0.3, +0.0 + grip_w, +0.41, -1.0, -1.0, -1.0])
-    model.ub = np.array([+30.0, +30.0, +30.0, +np.inf, +1.5, +1.5 - grip_w, +1.5, +1.0, +1.0, +1.0])
+    model.lb = np.array([-20.0, -20.0, -20.0, 0, -0.3, +0.0 + grip_w, +0.41, -1.0, -1.0, -1.0])
+    model.ub = np.array([+20.0, +20.0, +20.0, +np.inf, +1.5, +1.5 - grip_w, +1.5, +1.0, +1.0, +1.0])
 
     # General (differentiable) nonlinear inequalities hl <= h(z,p) <= hu
     model.ineq = inequality_constraints
@@ -133,7 +153,7 @@ def generate_pathplanner(create=True, path=''):
     # Set solver options
     codeoptions = forcespro.CodeOptions('FORCESNLPsolver3DTargetObstacle1')
     codeoptions.maxit = 200  # Maximum number of iterations
-    codeoptions.printlevel = 1
+    codeoptions.printlevel = 0
     codeoptions.optlevel = 0  # 0 no optimization, 1 optimize for size,
     #                             2 optimize for speed, 3 optimize for size & speed
     # codeoptions.nlp.bfgs_init = 3.0 * np.identity(4)  # initialization of the hessian
