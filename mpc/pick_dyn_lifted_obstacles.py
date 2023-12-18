@@ -158,6 +158,7 @@ def generate_pathplanner(create=True, path=''):
     codeoptions.nlp.integrator.Ts = 0.01
     codeoptions.nlp.integrator.nodes = 5
     codeoptions.nlp.integrator.type = 'ERK4'
+    codeoptions.server = 'https://forces-6-2-0.embotech.com'
     # codeoptions.nlp.TolEq = 1E-2
     # codeoptions.nlp.TolIneq = 1E-2
     # codeoptions.nlp.TolComp = 1E-2
