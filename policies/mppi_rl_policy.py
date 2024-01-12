@@ -48,39 +48,25 @@ class MPPIRLPolicy(Policy):
         obs_sim = copy.deepcopy(obs)
         self.mppi_policy.trajectory = []
 
-        if (linalg.norm(desired_goal - current_pos) > 0.26):
+        if (linalg.norm(desired_goal - current_pos) > self.envs[0].args.d_goal):
             for i in range(self.mppi_policy.T):
                 [rl_action_rollout], _ = self.rl_policy.predict(obs_sim)
                 sub_goal_sim = self.envs[0].subgoal_sim(rl_action_rollout, obs_sim[0]['observation'][0:3])
-                obs_pos = np.array(
-                    self.envs[0].env.get_obstacles(time=self.envs[0].time + (i + 2) * self.mppi_policy.Δt)).flatten()
-                diff = obs_sim[0]['observation'][25:28] - obs_sim[0]['observation'][
-                                                          0:3]  # Position Differenc between Gripper and Object
-                obs_sim[0]['observation'][0:3] = sub_goal_sim.copy()  # Gripper Position
-                obs_sim[0]['observation'][25:28] = sub_goal_sim.copy() + diff  # Object Position #Was 3:6 in DynLifted
-                # obs_sim[0]['observation'][25:25 + len(obs_pos)] = obs_pos #Obstacle Position #Commented Out due to Static Obstacle
+                obs_sim = self.envs[0].observation_sim(obs_sim, sub_goal_sim)  # Step Virtually the observation forward
+
                 self.mppi_policy.trajectory.append(sub_goal_sim)
-            [mppi_action] = self.mppi_policy.predict_with_goal(obs, sub_goal)
+            [mppi_action], _ = self.mppi_policy.predict_with_goal(obs, sub_goal)
         else:
             for i in range(self.mppi_policy.T):
                 self.mppi_policy.trajectory.append(desired_goal)
-            [mppi_action] = self.mppi_policy.predict_with_goal(obs, desired_goal)
+            [mppi_action], _ = self.mppi_policy.predict_with_goal(obs, desired_goal)
         if self.visualize == True:
             self.plot_rollouts(self.mppi_policy.trajectory_rollouts, self.mppi_policy.obstacle_positions, sub_goal,
                                self.mppi_policy.target.numpy(), self.mppi_policy.collisions, current_pos)
-        action[0:7] = mppi_action
-        action[7] = rl_action[7]
-        # print("Current Pos: " + str(current_pos[0]) + " " + str(current_pos[1]) + " " + str(
-        #    current_pos[2]) + " Current Vel: " + str(obs[0]['observation'][20]) + " " + str(
-        #    obs[0]['observation'][21]) + " " + str(
-        #    obs[0]['observation'][22]))
-        # print("SubGoal RL: " + str(sub_goal[0]) + " " + str(sub_goal[1]) + " " + str(sub_goal[2]))
-        # print("Target MPPI: " + str(self.mppi_policy.target.numpy()[0]) + " " + str(
-        #    self.mppi_policy.target.numpy()[1]) + " " + str(self.mppi_policy.target.numpy()[2]))
-        # print("RL Action  : " + str(rl_action[0]) + " " + str(rl_action[1]) + " " + str(rl_action[2]))
-        # print("MPPI Action: " + str(action[0]) + " " + str(action[1]) + " " + str(action[2]))
+        action[0:7] = mppi_action[:7]
+        action[7] = -0.8  # rl_action[7]
+
         return [action], _
-        # return [rl_action], _
 
     def plot_rollouts(self, trajectories, obstacle_positions, hgg_subgoal, mppi_target, collisions, current_pos):
         import pytorch_kinematics
