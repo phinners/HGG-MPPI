@@ -253,7 +253,7 @@ class FrankaFetchPick3DTargetObstacle(robot_env.RobotEnv, gym.utils.EzPickle):
         body_id = self.sim.model.body_name2id('obstacle1')
         pos1 = np.array(self.sim.data.body_xpos[body_id].copy())
         rot1 = np.array(self.sim.data.body_xquat[body_id].copy())  # Rotation of Obstacle included in OBS-Space!
-        dims1 = self.dyn_obstacles[0][3:6]
+        dims1 = self.dyn_obstacles[0][7:10]
         ob1 = np.concatenate((pos1, rot1, dims1.copy()))
 
         dyn_obstacles = np.array([ob1])
@@ -314,20 +314,20 @@ class FrankaFetchPick3DTargetObstacle(robot_env.RobotEnv, gym.utils.EzPickle):
         n_obst = len(self.obstacles)
         n_dyn = self.n_moving_obstacles
         directions = self.np_random.choice([-1, 1], size=n_dyn)
-        # directions[0] = -1  # TODO Just for reproduction purpose
+        # directions[0] = 1  # TODO Just for reproduction purpose
 
         self.current_obstacle_shifts = self.np_random.uniform(-1.0, 1.0, size=n_obst)
         self.current_obstacle_vels = directions * self.np_random.uniform(self.vel_lims[0], self.vel_lims[1], size=n_dyn)
 
-        # self.current_obstacle_shifts[0] = 0.57438137  # TODO Just for reproduction purpose
-        # self.current_obstacle_vels[0] = -0.68372116  # TODO Just for reproduction purpose
+        # self.current_obstacle_shifts[0] = -0.12276834  # TODO Just for reproduction purpose
+        # self.current_obstacle_vels[0] = 0.76333598  # TODO Just for reproduction purpose
 
-        # print("Directions")
-        # print(directions)
-        # print("Obstacle Shifts")
-        # print(self.current_obstacle_shifts)
-        # print("Obstacle Vels")
-        # print(self.current_obstacle_vels)
+        print("Directions")
+        print(directions)
+        print("Obstacle Shifts")
+        print(self.current_obstacle_shifts)
+        print("Obstacle Vels")
+        print(self.current_obstacle_vels)
 
         self.sim.forward()
         return True
@@ -338,16 +338,16 @@ class FrankaFetchPick3DTargetObstacle(robot_env.RobotEnv, gym.utils.EzPickle):
         goal[0] += self.np_random.uniform(-self.target_range_x, self.target_range_x)
         goal[1] += self.np_random.uniform(-self.target_range_y, self.target_range_y)
         goal[2] += self.np_random.uniform(-self.target_range_z, self.target_range_z)
-        # goal[0] = 1.52279819  # -self.target_range_x  # TODO For Reproduction Purpose
-        # goal[1] = 0.25024812  # self.target_range_y  # TODO For Reproduction Purpose
-        # goal[2] = 0.64317044  # self.target_range_z  # TODO For Reproduction Purpose
+        # goal[0] = 1.36826246  # -self.target_range_x  # TODO For Reproduction Purpose
+        # goal[1] = 0.28005915  # self.target_range_y  # TODO For Reproduction Purpose
+        # goal[2] = 0.70479834  # self.target_range_z  # TODO For Reproduction Purpose
 
         # goal[0] += self.target_range_x  # TODO For Reproduction Purpose
         # goal[1] -= self.target_range_y  # TODO For Reproduction Purpose
         # goal[2] -= self.target_range_z  # TODO For Reproduction Purpose
 
-        # print("Goal")
-        # print(goal)
+        print("Goal")
+        print(goal)
 
         return goal.copy()
 

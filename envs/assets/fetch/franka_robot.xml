@@ -79,7 +79,7 @@
                                                 <inertial pos="0 0 0" quat="0 0 0 1" mass="0.2"
                                                           diaginertia="0.001 0.001 0.001"/>
                                                 <!--                                                <geom size="0.008 0.004 0.008" pos="0 -0.005 -0.015" quat="0 0 0 1" type="box" group="0" solref="0.01 0.5" friction = "2 0.05 0.0001" conaffinity="1" contype="1" name="finger1_pad_collision"/>-->
-                                                <geom size="0.018 0.004 0.038" pos="0 -0.008 0.015" quat="0 0 0 1"
+                                                <geom size="0.018 0.004 0.028" pos="0 -0.008 0.015" quat="0 0 0 1"
                                                       type="box" material="robot0:gripper_finger_mat" condim="4"
                                                       friction="1 0.05 0.01" name="finger1_pad_collision"/>
                                             </body>
@@ -100,7 +100,7 @@
                                                 <inertial pos="0 0 0" quat="0 0 0 1" mass="0.2"
                                                           diaginertia="0.001 0.001 0.001"/>
                                                 <!--                                                <geom size="0.008 0.004 0.008" pos="0 0.005 -0.015" quat="0 0 0 1" type="box" group="0" solref="0.01 0.5" friction = "2 0.05 0.0001" conaffinity="1" contype="1" name="finger2_pad_collision"/>-->
-                                                <geom size="0.018 0.004 0.038" pos="0 0.008 0.015" quat="0 0 0 1"
+                                                <geom size="0.018 0.004 0.028" pos="0 0.008 0.015" quat="0 0 0 1"
                                                       type="box" material="robot0:gripper_finger_mat" condim="4"
                                                       friction=" 1 0.05 0.01" name="finger2_pad_collision"/>
                                             </body>

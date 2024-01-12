@@ -244,13 +244,13 @@ class FrankaFetchPickDynObstaclesEnv(robot_env.RobotEnv, gym.utils.EzPickle):
         body_id = self.sim.model.body_name2id('obstacle')
         pos1 = np.array(self.sim.data.body_xpos[body_id].copy())
         rot1 = np.array(self.sim.data.body_xquat[body_id].copy())
-        dims1 = self.dyn_obstacles[0][3:6]
+        dims1 = self.dyn_obstacles[0][7:10]
         ob1 = np.concatenate((pos1, rot1, dims1.copy()))
 
         body_id = self.sim.model.body_name2id('obstacle2')
         pos2 = np.array(self.sim.data.body_xpos[body_id].copy())
         rot2 = np.array(self.sim.data.body_xquat[body_id].copy())
-        dims2 = self.dyn_obstacles[1][3:6]
+        dims2 = self.dyn_obstacles[1][7:10]
         ob2 = np.concatenate((pos2, rot2, dims2.copy()))
 
         dyn_obstacles = np.array([ob1, ob2])
@@ -280,7 +280,7 @@ class FrankaFetchPickDynObstaclesEnv(robot_env.RobotEnv, gym.utils.EzPickle):
         self.viewer.cam.distance = 2.5
         self.viewer.cam.azimuth = 130.
         self.viewer.cam.elevation = -24.
-        self.viewer._run_speed = 0.2
+        self.viewer._run_speed = 0.8
 
     def _render_callback(self):
         # Visualize target.
@@ -321,24 +321,25 @@ class FrankaFetchPickDynObstaclesEnv(robot_env.RobotEnv, gym.utils.EzPickle):
         n_dyn = self.n_moving_obstacles
         directions = self.np_random.choice([-1, 1], size=n_dyn)
         # directions[0] = -1  # TODO Just for reproduction purpose
+        # directions[1] = -1  # TODO Just for reproduction purpose
 
         self.current_obstacle_shifts = self.np_random.uniform(-1.0, 1.0, size=n_obst)
         self.current_obstacle_vels = directions * self.np_random.uniform(self.vel_lims[0], self.vel_lims[1], size=n_dyn)
 
-        # self.current_obstacle_shifts[0] = -0.54833839  # TODO Just for reproduction purpose
-        # self.current_obstacle_shifts[1] = 0.02481964  # -0.14110882  # TODO Just for reproduction purpose
+        # self.current_obstacle_shifts[0] = 0.80595683  # TODO Just for reproduction purpose
+        # self.current_obstacle_shifts[1] = -0.39938843  # -0.14110882  # TODO Just for reproduction purpose
         # TODO 0.75 --> Object on the Left
         # TODO 0.25 --> Object on the Right
-        # self.current_obstacle_vels[0] = -8.6927212e-01  # 0.4  # TODO Just for reproduction purpose
+        # self.current_obstacle_vels[0] = -6.81045458e-01  # 0.4  # TODO Just for reproduction purpose
         # stop rectangle obstacle
         self.current_obstacle_vels[1] = 0.00001
 
-        # print("Directions")
-        # print(directions)
-        # print("Obstacle Shifts")
-        # print(self.current_obstacle_shifts)
-        # print("Obstacle Vels")
-        # print(self.current_obstacle_vels)
+        print("Directions")
+        print(directions)
+        print("Obstacle Shifts")
+        print(self.current_obstacle_shifts)
+        print("Obstacle Vels")
+        print(self.current_obstacle_vels)
         self._move_obstacles(t=self.sim.get_state().time)  # move obstacles to the initial positions
 
         self.sim.forward()
@@ -349,10 +350,10 @@ class FrankaFetchPickDynObstaclesEnv(robot_env.RobotEnv, gym.utils.EzPickle):
 
         goal[1] += self.np_random.uniform(-self.target_range_y, self.target_range_y)
         goal[0] += self.np_random.uniform(-self.target_range_x, self.target_range_x)
-        # goal[0] = 1.1415421  # TODO For Reproduction Purpose
-        # goal[1] = 0.45886902  # TODO For Reproduction Purpose
-        # print("Goal:")
-        # print(goal)
+        # goal[0] = 1.49324281  # TODO For Reproduction Purpose
+        # goal[1] = 0.45101687  # TODO For Reproduction Purpose
+        print("Goal:")
+        print(goal)
         return goal.copy()
 
     def _is_success(self, achieved_goal, desired_goal):

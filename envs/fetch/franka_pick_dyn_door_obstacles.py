@@ -445,7 +445,7 @@ class FrankaFetchPickDynDoorObstaclesEnv(robot_env.RobotEnv, gym.utils.EzPickle)
         # initial markers (index 3 is arbitrary)
         self.target_center = self.sim.data.get_site_xpos('target_center')
         self.init_center = self.sim.data.get_site_xpos('init_center')
-        sites_offset = (self.sim.data.site_xpos - self.sim.model.site_pos).copy()[3]
+        sites_offset = (self.sim.data.site_xpos - self.sim.model.site_pos).copy()[6]
 
         # Move end effector into position.
         gripper_target = self.init_center + self.gripper_extra_height  # + self.sim.data.get_site_xpos('robot0:grip')
