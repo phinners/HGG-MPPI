@@ -1,6 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Train RL" type="PythonConfigurationType" factoryName="Python">
     <module name="RL-MPC" />
+    <option name="ENV_FILES" value="" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
     <envs>
@@ -16,7 +17,7 @@
     <option name="ADD_SOURCE_ROOTS" value="false" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/train2.py" />
-    <option name="PARAMETERS" value="--alg ddpg2 --epochs 20 --env=FrankaFetchPick3DTargetObstacle-v1 --reward_min -10 --goal mpc" />
+    <option name="PARAMETERS" value="--alg ddpg2 --epochs 30 --env FrankaFetchPickDynLiftedObstaclesEnv-v1 --reward_min -10 --goal mpc" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />
