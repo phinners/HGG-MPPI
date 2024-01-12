@@ -70,13 +70,13 @@ function FORCESNLPsolverDynLiftedObstacle1_createCoderMatlabFunction(modelname, 
     position = [170, 99, 650, 316];
     parameter_sizes = struct('xinit', '[6,1]',...
                              'x0', '[80,1]',...
-                             'all_parameters', '[192,1]');
+                             'all_parameters', '[288,1]');
     if useCompactBlock
         function_name = 'FORCESNLPsolverDynLiftedObstacle1_coderFunctioncompact.m';
         position = [170, 99, 650, 231];
         parameter_sizes = struct('xinit', '[6,1]',...
                                  'x0', '[80,1]',...
-                                 'all_parameters', '[192,1]');
+                                 'all_parameters', '[288,1]');
     end
     
     result = exist(modelname, 'file');

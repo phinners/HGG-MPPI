@@ -12,7 +12,7 @@ nstages = 8
 params = \
 [("xinit"               , "dense" , ""               , ctypes.c_double, numpy.float64, (  6,   1),    6),
  ("x0"                  , "dense" , ""               , ctypes.c_double, numpy.float64, ( 80,   1),   80),
- ("all_parameters"      , "dense" , ""               , ctypes.c_double, numpy.float64, (144,   1),  144)]
+ ("all_parameters"      , "dense" , ""               , ctypes.c_double, numpy.float64, (208,   1),  208)]
 
 # Output                | Type    | Ctypes type    | Numpy type   | Shape     | Len
 outputs = \
@@ -52,12 +52,12 @@ info = \
 # Dynamics dimensions
 #   nvar    |   neq   |   dimh    |   dimp    |   diml    |   dimu    |   dimhl   |   dimhu    
 dynamics_dims = [
-	(10, 6, 3, 18, 9, 8, 3, 0), 
-	(10, 6, 3, 18, 9, 8, 3, 0), 
-	(10, 6, 3, 18, 9, 8, 3, 0), 
-	(10, 6, 3, 18, 9, 8, 3, 0), 
-	(10, 6, 3, 18, 9, 8, 3, 0), 
-	(10, 6, 3, 18, 9, 8, 3, 0), 
-	(10, 6, 3, 18, 9, 8, 3, 0), 
-	(10, 6, 3, 18, 9, 8, 3, 0)
+	(10, 6, 3, 26, 9, 8, 3, 0), 
+	(10, 6, 3, 26, 9, 8, 3, 0), 
+	(10, 6, 3, 26, 9, 8, 3, 0), 
+	(10, 6, 3, 26, 9, 8, 3, 0), 
+	(10, 6, 3, 26, 9, 8, 3, 0), 
+	(10, 6, 3, 26, 9, 8, 3, 0), 
+	(10, 6, 3, 26, 9, 8, 3, 0), 
+	(10, 6, 3, 26, 9, 8, 3, 0)
 ]

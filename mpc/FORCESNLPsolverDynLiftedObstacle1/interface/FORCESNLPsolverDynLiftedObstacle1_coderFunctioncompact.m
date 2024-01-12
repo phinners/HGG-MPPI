@@ -23,7 +23,7 @@
 % Inputs:
 % - xinit - matrix of size [6x1]
 % - x0 - matrix of size [80x1]
-% - all_parameters - matrix of size [192x1]
+% - all_parameters - matrix of size [288x1]
 % Outputs:
 % - outputs - column vector of length 80
 function [outputs] = FORCESNLPsolverDynLiftedObstacle1(xinit, x0, all_parameters)

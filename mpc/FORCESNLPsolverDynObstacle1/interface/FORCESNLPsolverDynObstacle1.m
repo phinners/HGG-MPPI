@@ -4,7 +4,7 @@
 %   subject to the parameters supplied in the following struct:
 %       PARAMS.xinit - matrix of size [6x1]
 %       PARAMS.x0 - matrix of size [80x1]
-%       PARAMS.all_parameters - matrix of size [144x1]
+%       PARAMS.all_parameters - matrix of size [208x1]
 %
 %   OUTPUT returns the values of the last iteration of the solver where
 %       OUTPUT.x1 - column vector of length 10

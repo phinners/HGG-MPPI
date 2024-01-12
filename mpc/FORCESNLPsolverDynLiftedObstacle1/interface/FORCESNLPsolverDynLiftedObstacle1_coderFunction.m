@@ -23,7 +23,7 @@
 % Inputs:
 % - xinit - matrix of size [6x1]
 % - x0 - matrix of size [80x1]
-% - all_parameters - matrix of size [192x1]
+% - all_parameters - matrix of size [288x1]
 % Outputs:
 % - x1 - column vector of length 10
 % - x2 - column vector of length 10
