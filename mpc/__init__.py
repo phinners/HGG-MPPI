@@ -19,9 +19,9 @@ def make_mpc(args):
 
         'FrankaFetchPickDynSqrObstacle-v1': pick_dyn_sqr_obstacles,
         'FetchPickDynDoorObstaclesEnv-v1': pick_dyn_door_obstacles,
-        'FrankaFetchPickDynDoorObstaclesEnv-v1': pick_dyn_door_obstacles,
-        'FrankaFetchPickDynObstaclesMaxEnv-v1': pick_dyn_obstacles,
+        'FrankaFetchPickDynObstaclesEnv-v1': pick_dyn_obstacles,
         'FrankaFetchPickDynLiftedObstaclesEnv-v1': pick_dyn_lifted_obstacles,
+        'FrankaFetchPickDynDoorObstaclesEnv-v1': pick_dyn_door_obstacles,
         'FrankaFetchPick3DTargetObstacle-v1': pick_3d_target_obstacle
     }
 
