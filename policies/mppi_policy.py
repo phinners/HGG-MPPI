@@ -20,6 +20,7 @@ class MPPIPolicy(Policy):
     Vector = Policy.Vector
     InfoVector = Policy.InfoVector
     LastPosition = np.zeros((3,))
+    grip_action = -0.8
 
     def __init__(self, args):
         (
@@ -42,8 +43,6 @@ class MPPIPolicy(Policy):
             loc=noise_mean_distribution, covariance_matrix=self.Σ)
         self.γ = self.λ * (1 - self.α)
         self.Σ_inv = torch.inverse(self.Σ)
-        # self.u = torch.zeros((self.T, 3), dtype=self.dtype, device=self.device)
-        # self.u_init = torch.zeros(3, dtype=self.dtype, device=self.device)
 
         self.u = torch.zeros((self.T, 7), dtype=self.dtype, device=self.device)
         self.u_init = torch.zeros(7, dtype=self.dtype, device=self.device)
@@ -77,46 +76,21 @@ class MPPIPolicy(Policy):
         self.u = torch.roll(self.u, -1, dims=0)
         self.u[-1] = self.u_init
 
-        # if the goal is inside the obstacle, we don't update the control sequence
-        # and instead immediately return the next action
-        if self.is_goal_reachable(goal, obstacle_positions[0]):
-            # self.update_control(x_init, goal, obstacle_positions)
-            self.update_control(joint_init, goal, obstacle_positions)
-        else:  # TODO Check if we need to update control every time step?
-            # self.update_control(x_init, goal, obstacle_positions)
-            self.update_control(joint_init, goal, obstacle_positions)
-            # self.update_control(x_init, torch.tensor(obs[0]['desired_goal'], device=self.device), obstacle_positions)
-            # print("Goal is not Reachable! No Recalculation, Just next Action")
-        if torch.all(self.collisions[-1]):
-            # print("Alle Trajectories result in Collision! Stopping!")
-            # target = x_init[0:3]
-            # self.u = torch.zeros((self.T, 3), dtype=self.dtype, device=self.device)
-            target = self.convert_to_target(joint_init, self.u[0])
-            pass
-        else:
-            target = self.convert_to_target(joint_init, self.u[0])
-        # target = torch.tensor([1.55, 1.1, 0.45])
-        action = (target - x_init).numpy()
-        # np.array(
-        #    [(target[0] - x_init[0]).cpu(), (target[1] - x_init[1]).cpu(), (target[2] - x_init[2]).cpu(), -0.8])
+        self.update_control(joint_init, goal, obstacle_positions)
+        target = self.convert_to_target(joint_init, self.u[0])
 
+        action = (target - x_init).numpy()  # Action is the difference between current Position and Target Position
+
+        # Calculate Real Target is Used for Vizualizing the desired Position in the next Timestep for Visualization
         self.target = self.calculate_real_target(joint_init, self.u[0])
-        # x_init[0:3] + x_init[3:6] * self.Δt + self.u[0] * self.Δt  # / (
-        #        1 - torch.exp(torch.tensor(-0.01 / 0.1))) * self.Δt  # target
-        # for hyperparameter tuning: check the angle between action and (goal - x_init)
-        # v1 = (target[0:3] - x_init[0:3]).cpu()
-        # v2 = (goal - x_init[0:3]).cpu()
-        # cos_angle = np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
-        # angle_rad = np.arccos(np.clip(cos_angle, -1, 1))
-        # if angle_rad > np.pi * 1 / 2 or angle_rad < -np.pi * 1 / 2:
-        #    return [action], [{'direction': 'opposite'}]
-        return [action]  # , [{'direction': 'forward'}]
+
+        return [np.append(action, self.grip_action)], [{'direction': 'forward'}]
 
     def calculate_real_target(self, x, u):
         import os
         import pytorch_kinematics
 
-        MODEL_URDF_PATH = os.path.join(os.getcwd(), 'envs', 'assets', 'fetch', 'panda_arm.urdf')
+        MODEL_URDF_PATH = os.path.join(os.getcwd(), 'envs', 'assets', 'fetch', 'franka_panda_arm.urdf')
 
         xml = bytes(bytearray(open(MODEL_URDF_PATH).read(), encoding='utf-8'))
         dtype = torch.double
@@ -137,7 +111,7 @@ class MPPIPolicy(Policy):
         eef_matrix = ret.get_matrix()
         eef_pos = eef_matrix[:, :3, 3] + robot_base_pos  # Calculate World Coordinate Target
         eef_rot = pytorch_kinematics.matrix_to_quaternion(eef_matrix[:, :3, :3])
-        return torch.concatenate((eef_pos, eef_rot), dim=1)
+        return torch.cat((eef_pos, eef_rot), dim=1)
 
     def parse_observation(self, obs, goal):
         ob = obs['observation']
