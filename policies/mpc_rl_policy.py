@@ -52,6 +52,6 @@ class MPCRLPolicy(Policy):
 
         # gripper action
         for i in range(len(actions)):
-            actions[i][3] = -0.8
+            actions[i][7] = -0.8
 
         return actions, infos
