@@ -66,28 +66,28 @@ def inequality_constraints(z, p):
     y_o1 = p[7]
     z_o1 = p[8]
 
-    x_o2 = p[12]
-    y_o2 = p[13]
-    z_o2 = p[14]
+    x_o2 = p[16]
+    y_o2 = p[17]
+    z_o2 = p[18]
 
-    x_o3 = p[18]
-    y_o3 = p[19]
-    z_o3 = p[20]
+    x_o3 = p[26]
+    y_o3 = p[27]
+    z_o3 = p[28]
 
     grip_w_x = 0.055
     grip_w_y = 0.05
     grip_w_z = 0.02
 
-    dx_o2 = p[15] + grip_w_x + 0.02
-    dy_o2 = p[16] + grip_w_y + 0.02
-    dz_o2 = p[17] + grip_w_z
+    dx_o2 = p[23] + grip_w_x + 0.02
+    dy_o2 = p[24] + grip_w_y + 0.02
+    dz_o2 = p[25] + grip_w_z
     xp2 = casadi.fabs(p_x - x_o2) / dx_o2
     yp2 = casadi.fabs(p_y - y_o2) / dy_o2
     zp2 = casadi.fabs(p_z - z_o2) / dz_o2
 
-    dx_o3 = p[21] + grip_w_x
-    dy_o3 = p[22] + grip_w_y
-    dz_o3 = p[23] + grip_w_z
+    dx_o3 = p[33] + grip_w_x
+    dy_o3 = p[34] + grip_w_y
+    dz_o3 = p[35] + grip_w_z
     xp3 = casadi.fabs(p_x - x_o3) / dx_o3
     yp3 = casadi.fabs(p_y - y_o3) / dy_o3
     zp3 = casadi.fabs(p_z - z_o3) / dz_o3
@@ -115,7 +115,7 @@ def generate_pathplanner(create=True, path=''):
     model.nvar = 10  # number of variables
     model.neq = 6  # number of equality constraints
     model.nh = 3
-    model.npar = 6 + 6 * 3  # number of runtime parameters
+    model.npar = 6 + 10 * 3  # number of runtime parameters
 
     model.objective = objective
     model.objectiveN = objectiveN
@@ -128,8 +128,8 @@ def generate_pathplanner(create=True, path=''):
 
     # Inequality constraints
     #                   [ ax,     ay,    az,   relax         xPos,         yPos,          zPos    xVel, yVel, zVel]
-    model.lb = np.array([-30.0, -30.0, -30.0, 0, -0.3, +0.4 + grip_w, +0.41, -1.0, -1.0, -1.0])
-    model.ub = np.array([+30.0, +30.0, +30.0, +np.inf, +1.5, +1.1 - grip_w, +0.5, +1.0, +1.0, +1.0])
+    model.lb = np.array([-5.0, -5.0, -5.0, 0, -0.3, +0.4 + grip_w, +0.41, -1.0, -1.0, -1.0])
+    model.ub = np.array([+5.0, +5.0, +5.0, +np.inf, +1.5, +1.1 - grip_w, +0.6, +1.0, +1.0, +1.0])
 
     # General (differentiable) nonlinear inequalities hl <= h(z,p) <= hu
     model.ineq = inequality_constraints

@@ -18,9 +18,12 @@ def get_parameters(args):
         args.λ = 60  # 40  # 1.62e1
         args.σ = 0.201  # 0.01  # 08  # 0.25  # 4.0505  # 10.52e1
         args.χ = 0.0  # 2.00e-2
-        args.ω1 = 9.16e3
+        args.ω1 = 1.0003
         args.ω2 = 9.16e3
+        args.ω3 = 9.16e3
+        args.ω4 = 9.16e3
         args.ω_Φ = 5.41
+        args.d_goal = 0.15
 
     K = 500
     T = 10
@@ -90,24 +93,7 @@ def get_parameters(args):
     def dynamics(x, u):
 
         new_vel = x[:, 7:14] + u
-
-        # new_vel[:, 0] = torch.clamp(new_vel[:, 0], min=-2.1750, max=2.1750)  # Limit Joint Velocities
-        # new_vel[:, 1] = torch.clamp(new_vel[:, 1], min=-2.1750, max=2.1750)  # Limit Joint Velocities
-        # new_vel[:, 2] = torch.clamp(new_vel[:, 2], min=-2.1750, max=2.1750)  # Limit Joint Velocities
-        # new_vel[:, 3] = torch.clamp(new_vel[:, 3], min=-2.1750, max=2.1750)  # Limit Joint Velocities
-        # new_vel[:, 4] = torch.clamp(new_vel[:, 4], min=-2.6100, max=2.6100)  # Limit Joint Velocities
-        # new_vel[:, 5] = torch.clamp(new_vel[:, 5], min=-2.6100, max=2.6100)  # Limit Joint Velocities
-        # new_vel[:, 6] = torch.clamp(new_vel[:, 6], min=-2.6100, max=2.6100)  # Limit Joint Velocities
-
         new_pos = x[:, 0:7] + new_vel * Δt
-
-        # new_pos[:, 0] = torch.clamp(new_pos[:, 0], min=-2.8973, max=2.8973)  # Limit Joint Positions
-        # new_pos[:, 1] = torch.clamp(new_pos[:, 1], min=-1.7628, max=1.7628)  # Limit Joint Positions
-        # new_pos[:, 2] = torch.clamp(new_pos[:, 2], min=-2.8973, max=2.8973)  # Limit Joint Positions
-        # new_pos[:, 3] = torch.clamp(new_pos[:, 3], min=-3.0718, max=-0.0698)  # Limit Joint Positions
-        # new_pos[:, 4] = torch.clamp(new_pos[:, 4], min=-2.8973, max=2.8973)  # Limit Joint Positions
-        # new_pos[:, 5] = torch.clamp(new_pos[:, 5], min=-0.0175, max=3.7525)  # Limit Joint Positions
-        # new_pos[:, 6] = torch.clamp(new_pos[:, 6], min=-2.8973, max=2.8973)  # Limit Joint Positions
 
         return torch.cat((new_pos, new_vel), dim=1)
 
@@ -134,14 +120,6 @@ def get_parameters(args):
 
         collision = torch.any(collision_link_segments, dim=1)
 
-        if torch.any(collision):
-            # print("Link Trajectorie with collision detected!")
-            pass
-
-        if torch.all(collision):
-            # print("All Link Trajectorie with collision detected!")
-            pass
-
         return collision
 
     def state_cost(x, goal, obstacles):
@@ -152,6 +130,8 @@ def get_parameters(args):
 
         link8_matrix = ret['panda_link8'].get_matrix()  # Equals to panda0_gripper Bode in Mujoco File
         link8_pos = link8_matrix[:, :3, 3] + robot_base_pos  # Equals to panda0_gripper Bode in Mujoco File
+
+        dist_robot_base = torch.norm(link8_pos - robot_base_pos, dim=1)
 
         goal_dist = torch.norm((link8_pos - goal), dim=1)
         cost = 1000 * goal_dist ** 2
@@ -179,10 +159,11 @@ def get_parameters(args):
             pass
 
         table_collision = torch.le(link8_pos[:, 2], 0.45)
+        workspace_costs = torch.ge(dist_robot_base, 0.8)
 
-        # cost += joint_collision_calculation(x, obstacles)
-        cost += args.ω1 * table_collision
         cost += args.ω2 * collision
+        cost += args.ω3 * table_collision
+        cost += args.ω4 * workspace_costs
         collision = torch.zeros([500, ], dtype=torch.bool)
         return cost
 
