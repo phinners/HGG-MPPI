@@ -34,14 +34,14 @@ def extract_parameters(subgoal, goal, t, dt, N, obstacles, vels, shifts, pos_dif
     goals = np.append(subgoal, goal)
     stat_obstacles_np = np.array(stat_obstacles).ravel()
     return np.array([np.concatenate([goals,
-        move_obstacles(t + dt * n, obstacles, vels, pos_difs, shifts).ravel(),
-        stat_obstacles_np]) for n in range(N)])
+                                     move_obstacles(t + dt * n, obstacles, vels, pos_difs, shifts).ravel(),
+                                     stat_obstacles_np]) for n in range(N)])
 
 
 def make_obs(p):
     obst = p[6:]
     n = obst.shape[0]
-    obs = {'real_obstacle_info': np.array_split(obst, n / 6)}
+    obs = {'real_obstacle_info': np.array_split(obst, n / 10)}
     return obs
 
 
