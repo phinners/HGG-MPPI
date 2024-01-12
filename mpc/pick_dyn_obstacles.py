@@ -65,15 +65,15 @@ def inequality_constraints(z, p):
     y_o1 = p[7]
     z_o1 = p[8]
 
-    x_o2 = p[12]
-    y_o2 = p[13]
-    z_o2 = p[14]
+    x_o2 = p[16]
+    y_o2 = p[17]
+    z_o2 = p[18]
 
     grip_w_x = 0.03
     grip_w_y = 0.048
 
-    dx_o2 = p[15] + grip_w_x
-    dy_o2 = p[16] + grip_w_y
+    dx_o2 = p[23] + grip_w_x
+    dy_o2 = p[24] + grip_w_y
     xp2 = casadi.fabs(p_x - x_o2) / dx_o2
     yp2 = casadi.fabs(p_y - y_o2) / dy_o2
 
@@ -98,7 +98,7 @@ def generate_pathplanner(create=True, path=''):
     model.nvar = 10  # number of variables
     model.neq = 6  # number of equality constraints
     model.nh = 3
-    model.npar = 6 + 6 * 2  # number of runtime parameters
+    model.npar = 6 + 10 * 2  # number of runtime parameters
 
     model.objective = objective
     model.objectiveN = objectiveN
@@ -178,7 +178,8 @@ def main():
     pos_difs = np.array([0.22, 0.13])
 
     stat_obstacles = []
-    dyn_obstacles = [[1.3, 0.60, 0.435, 0.03, 0.03, 0.03], [1.28, 0.80, 0.435, 0.12, 0.03, 0.03]]
+    dyn_obstacles = [[1.3, 0.60, 0.435, 1.0, 0.0, 0.0, 0.0, 0.03, 0.03, 0.03],
+                     [1.28, 0.80, 0.435, 1.0, 0.0, 0.0, 0.0, 0.12, 0.03, 0.03]]
 
     sim_length = 60
 
