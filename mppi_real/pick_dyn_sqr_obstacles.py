@@ -13,7 +13,7 @@ def get_parameters(args):
 
     K = 500
     T = 10
-    Δt = 0.01
+    Δt = 0.5  # Real Environment 0.5s Steptime 0.01
 
     dtype = torch.double
     device = 'cpu'
