@@ -1,4 +1,4 @@
-from frankx import Affine, LinearRelativeMotion, Robot, LinearMotion
+from frankx import Affine, LinearRelativeMotion, Robot, LinearMotion, InvalidOperationException
 
 
 class FrankaRobot:
@@ -27,5 +27,22 @@ class FrankaRobot:
     def current_pose(self):
         return self.robot.current_pose().vector()
 
-    def current_joint_pose(self):
-        self.robot.currentJointPositions()
+    def current_joint_state(self):
+        # Get the current state handling the read exception when the robot is in motion
+        try:
+            robot_state = self.robot.get_state(read_once=True)
+        except InvalidOperationException:
+            robot_state = self.robot.get_state(read_once=False)
+        joint_pose = robot_state.q
+        joint_vel = robot_state.dq
+        return joint_pose, joint_vel
+
+
+if __name__ == "__main__":
+    robot = FrankaRobot()
+    cur_pose = robot.current_pose()
+    cur_joint_pose, cur_joint_vel = robot.current_joint_state()
+
+    print(cur_pose)
+    print(cur_joint_pose)
+    print(cur_joint_vel)
