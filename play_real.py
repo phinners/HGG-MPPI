@@ -60,7 +60,6 @@ class Player:
         self.pos_dif = 0.1
         self.center_x = 0.5 + self.offset[0]
         self.origin_offset = np.array([0.042, 0.038])
-
         # camera set
         self.camera = Camera()
 
@@ -121,10 +120,11 @@ class Player:
 
     def play(self):
         xinit = self.init + self.offset
+        cur_joint_pose, cur_joint_vel = self.robot.current_joint_state()
         dists = self.get_obs_distance()
         ob = self.env.reset()
         # print("original obs", ob)
-        ob = self.set_obs(ob, xinit, dists)
+        ob = self.set_obs(ob, xinit, dists, cur_joint_pose, cur_joint_vel)
         if args.play_policy in ['MPCPolicy']:
             self.policy.set_sub_goal(ob['desired_goal'])
 
@@ -144,7 +144,7 @@ class Player:
 
             # update the original pose
             cur_pose = self.robot.current_pose()
-            cur_joint_pose = self.robot.current_joint_pose()
+            cur_joint_pose, cur_joint_vel = self.robot.current_joint_state()
             x_init = cur_pose[0] + self.offset[0]
             y_init = cur_pose[1] + self.offset[1]
             if self.block_z:
@@ -154,21 +154,39 @@ class Player:
             xinit = np.array([x_init, y_init, z_init])
             # print("xinit", xinit)
             dists = self.get_obs_distance()
-            ob = self.set_obs(ob, xinit, dists)
+            ob = self.set_obs(ob, xinit, dists, cur_joint_pose, cur_joint_vel)
             t2 = time.time() - t1
             print("time:", t2)
             if self.dt - t2 > 0:
                 time.sleep(self.dt - t2)
         self.finish()
 
-    def set_obs(self, obs, xinit, dists):
-        obs["observation"][:2] = xinit[:2]
-        obs["observation"][3:5] = xinit[:2]
+    def set_obs(self, obs, xinit, dists, joint_pose, joint_vel):
+        obs["observation"][0:3] = xinit  # EEF POS Originally just :2
+        obs["observation"][3:7] = obs["observation"][3:7]  # EEF ROT
+        obs["observation"][7:14] = joint_pose  # Joint Position
+        obs["observation"][16:23] = joint_vel  # Joint Velocities
+
+        obs["observation"][25:28] = xinit  # Object Position
+        obs["observation"][28:31] = obs["observation"][28:31]  # Object Relative Position
 
         dyn_obstacles = self.get_obs_pose(dists)
 
-        obs["observation"][9:11] = dyn_obstacles[0, :2]
-        obs["observation"][15:17] = dyn_obstacles[1, :2]
+        # Obstacle 0
+        obs["observation"][47:50] = dyn_obstacles[0]  # OBS0 Position
+        obs["observation"][50:54] = obs["observation"][50:54]  # OBS0 Rotation
+        obs["observation"][54:57] = obs["observation"][54:57]  # OBS0 Dimension
+
+        # Obstacle 1
+        obs["observation"][57:60] = dyn_obstacles[1]  # OBS1 Position
+        obs["observation"][60:64] = obs["observation"][60:64]  # OBS1 Rotation
+        obs["observation"][64:67] = obs["observation"][64:67]  # OBS1 Dimension
+
+        # Obstacle 2
+        obs["observation"][67:70] = obs["observation"][67:70]  # OBS2 Position
+        obs["observation"][70:74] = obs["observation"][70:74]  # OBS2 Rotation
+        obs["observation"][74:77] = obs["observation"][74:77]  # OBS2 Dimension
+
         obs["real_obstacle_info"][0, :2] = dyn_obstacles[0, :2]
         obs["real_obstacle_info"][1, :2] = dyn_obstacles[1, :2]
 
@@ -177,8 +195,16 @@ class Player:
             self.signs[0] = signs[0] if signs[0] != 0 else -self.signs[0]
             self.signs[1] = signs[1] if signs[1] != 0 else -self.signs[1]
         self.pre_dists = dists
-        obs["observation"][21] = self.vels[0] * self.signs[0]
-        obs["observation"][24] = self.vels[1] * self.signs[1]
+
+        # Obstacle 0..2 Velocity
+        obs["observation"][77:80] = obs["observation"][77:80]  # OBS0 Velocity
+        obs["observation"][77] = self.vels[0] * self.signs[0]  # OBS0 X Velocity
+
+        obs["observation"][80:83] = obs["observation"][80:83]  # OBS1 Velocity
+        obs["observation"][80] = self.vels[1] * self.signs[1]  # OBS1 X Velocity
+
+        obs["observation"][83:86] = obs["observation"][83:86]  # OBS2 Velocity
+
         obs["obj_vels"][0, 0] = self.vels[0] * self.signs[0]
         obs["obj_vels"][1, 0] = self.vels[1] * self.signs[1]
 
