@@ -44,6 +44,7 @@ class Tester:
         args.logger.add_item('Success')
         args.logger.add_item('Success/mpc')
         args.logger.add_item('Seed')
+        args.logger.add_item('Computational Time')
 
     def test(self):
         env = self.env
@@ -54,6 +55,7 @@ class Tester:
         succ_step_sum = 0.0
         tol_acc_sum = 0.0
         start_seed = 1000
+        comp_time = 0.0
         comp_sum = 0.0
 
         for i in range(self.test_rollouts):
@@ -72,7 +74,8 @@ class Tester:
             for timestep in range(args.timesteps):
                 start_time = time.time()
                 actions, infos = self.policy.predict(obs=[ob])
-                comp_sum += time.time() - start_time
+                comp_time = time.time() - start_time
+                comp_sum += comp_time
                 action = actions[0]
                 ob, reward, _, env_info = env.step(action)
                 logger_timesteps += 1
@@ -90,6 +93,7 @@ class Tester:
             args.logger.add_record('ExReward', env_info['ExReward'])
             args.logger.add_record('Success/mpc', int(env.collisions <= test_col_tolerance and env_info['Success']))
             args.logger.add_record('Seed', start_seed + i)
+            args.logger.add_record('Computational Time', comp_time)
 
             acc_sum += env_info['Success']
             col_sum += env.collisions

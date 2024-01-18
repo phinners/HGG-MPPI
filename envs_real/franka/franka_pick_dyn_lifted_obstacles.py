@@ -1,11 +1,10 @@
+import copy
+import math
 import os
 from typing import List
 
 import gym
-from gym_robotics.envs import fetch_env
 import numpy as np
-import copy
-import math
 from gym_robotics.envs import rotations, robot_env, utils
 
 # Ensure we get the path separator correct on windows
@@ -67,15 +66,15 @@ class FrankaPickDynLiftedObstaclesEnv(robot_env.RobotEnv, gym.utils.EzPickle):
         self.target_range_y = 0.02
         self.distance_threshold = 0.05
         self.reward_type = reward_type
-        self.limit_action = 0.05    # limit maximum change in position
+        self.limit_action = 0.05  # limit maximum change in position
         self.block_max_z = 0.07 + 0.4
 
         self.field = [1.3, 0.75, 0.6, 0.1, 0.35, 0.2]  # real env
         self.dyn_obstacles_geom_names = ['obstacle:geom', 'obstacle2:geom']
         self.stat_obstacles_geom_names = ['obstacle3:geom']
-        self.stat_obstacles = [[1.3, 0.65, 0.425, 0.24, 0.03, 0.025]]
-        self.dyn_obstacles = [[1.3, 0.85, 0.421, 0.045, 0.017, 0.02],
-                              [1.3, 0.65, 0.471, 0.015, 0.017, 0.02]]  # real env
+        self.stat_obstacles = [[1.3, 0.65, 0.425, 1.0, 0.0, 0.0, 0.0, 0.24, 0.03, 0.025]]
+        self.dyn_obstacles = [[1.3, 0.85, 0.421, 1.0, 0.0, 0.0, 0.0, 0.045, 0.017, 0.02],
+                              [1.3, 0.65, 0.471, 1.0, 0.0, 0.0, 0.0, 0.015, 0.017, 0.02]]  # real env
 
         self.obstacles = self.dyn_obstacles + self.stat_obstacles
         self.obstacles_geom_names = self.dyn_obstacles_geom_names + self.stat_obstacles_geom_names
@@ -241,7 +240,8 @@ class FrankaPickDynLiftedObstaclesEnv(robot_env.RobotEnv, gym.utils.EzPickle):
 
     def _get_obs(self):
         # positions
-        grip_pos = self.sim.data.get_site_xpos('grip_site')
+        grip_pos = self.sim.data.get_body_xpos('eef')  # self.sim.data.get_site_xpos('grip_site')
+        grip_rot = self.sim.data.get_body_xquat('eef')
         dt = self.sim.nsubsteps * self.sim.model.opt.timestep
         grip_velp = self.sim.data.get_site_xvelp('grip_site') * dt
         robot_qpos, robot_qvel = utils.robot_get_obs(self.sim)
@@ -267,41 +267,39 @@ class FrankaPickDynLiftedObstaclesEnv(robot_env.RobotEnv, gym.utils.EzPickle):
 
         body_id = self.sim.model.body_name2id('obstacle')
         pos1 = np.array(self.sim.data.body_xpos[body_id].copy())
-        body_id2 = self.sim.model.body_name2id('obstacle2')
-        pos2 = np.array(self.sim.data.body_xpos[body_id2].copy())
-        dims1 = self.obstacles[0][3:6]
-        dims2 = self.obstacles[1][3:6]
-        ob1 = np.concatenate((pos1, dims1.copy()))
-        ob2 = np.concatenate((pos2, dims2.copy()))
+        rot1 = np.array(self.sim.data.body_xquat[body_id].copy())
+        dims1 = self.dyn_obstacles[0][7:10]
+        ob1 = np.concatenate((pos1, rot1, dims1.copy()))
+
+        body_id = self.sim.model.body_name2id('obstacle2')
+        pos2 = np.array(self.sim.data.body_xpos[body_id].copy())
+        rot2 = np.array(self.sim.data.body_xquat[body_id].copy())
+        dims2 = self.dyn_obstacles[1][7:10]
+        ob2 = np.concatenate((pos2, rot2, dims2.copy()))
+
         dyn_obstacles = np.array([ob1, ob2])
 
-        # obs = np.concatenate([
-        #     grip_pos, object_pos.ravel(), object_rel_pos.ravel(), gripper_state, object_rot.ravel(),
-        #     object_velp.ravel(), object_velr.ravel(), grip_velp, gripper_vel
-        # ])
-        # obs = np.concatenate([
-        #     grip_pos, object_pos.ravel(), object_rel_pos.ravel(), gripper_state, object_rot.ravel(),
-        # ])
         obs = np.concatenate([
-                grip_pos, object_pos.ravel(), object_rot.ravel()
+            grip_pos, grip_rot, robot_qpos, robot_qvel, object_pos.ravel(), object_rel_pos.ravel(), gripper_state,
+            object_rot.ravel(),
+            object_velp.ravel(), object_velr.ravel(), grip_velp, gripper_vel
         ])
+
         # obs = np.concatenate([
-        #         grip_pos, grip_pos, [0, 0, 0]
+        #    grip_pos, object_pos.ravel(), object_rel_pos.ravel(), gripper_state,  # Removed Joint Values
+        #    object_rot.ravel(),
+        #    object_velp.ravel(), object_velr.ravel(), grip_velp, gripper_vel
         # ])
-        # print("grip_pos", grip_pos)
-        # print("object_pos.ravel()", object_pos.ravel())
-        # print("object_rel_pos.ravel()", object_rel_pos.ravel())
-        # print("gripper_state", gripper_state)
-        # print("object_rot.ravel()", object_rot.ravel())
 
         obj_dist = np.linalg.norm(object_rel_pos.ravel())
+
         stat_obstacles = np.array(self.stat_obstacles)
+
         return {
             'observation': obs.copy(),
             'achieved_goal': achieved_goal.copy(),
             'desired_goal': self.goal.copy(),
-            # 'real_obstacle_info': np.concatenate([dyn_obstacles, stat_obstacles]),
-            'real_obstacle_info': dyn_obstacles,
+            'real_obstacle_info': np.concatenate([dyn_obstacles, stat_obstacles]),
             'object_dis': obj_dist
         }
 
