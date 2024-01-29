@@ -12,10 +12,62 @@ recommended by the RL agent.
 ## Requirements
 
 The code is tested on a Omen by HP c0169ng Laptop running Ubuntu 22.04.1 LTS.
-To install all requirements, create a new conda environment using the `requirements.txt` file.
+To install all requirements, create a new pyenv environment using the `requirements.txt` file.
+
+Create Virtualenvironment using pyenv
 
 ```bash
-conda create --name <env> --file requirements.txt python=3.7
+pyenv virtualenv 3.7.16 <name>
+```
+
+Activate Virtualenv
+
+```bash
+pyenv activate <name>
+```
+
+Install requirements.txt
+
+```bash
+pip install -r requirements.txt
+```
+
+## Mujoco
+
+1. Download the MuJoCo version 2.1 binaries for
+   [Linux](https://mujoco.org/download/mujoco210-linux-x86_64.tar.gz) or
+   [OSX](https://mujoco.org/download/mujoco210-macos-x86_64.tar.gz).
+2. Extract the downloaded `mujoco210` directory into `~/.mujoco/mujoco210`.
+
+If you want to specify a nonstandard location for the package,
+use the env variable `MUJOCO_PY_MUJOCO_PATH`.
+
+I needed to export the LD_LIBRARY_PATH Variable to
+
+```bash
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/.mujoco/mujoco210/bin
+```
+
+This Variable is also set in the Pycharm Run Configurations
+
+## ForcesPro
+
+To run the MPC or exHGG-MPC algorithm, first generate a ForcesPro solver by setting up ForcesPro, following the
+instructions in the [ForcesPro documentation](https://forces.embotech.com/Documentation/installation/python.html), and
+run the following command:
+
+```bash
+cd mpc/
+python pick_dyn_obstacles.py --mpc_gen t
+```
+
+For the other environments, replace `pick_dyn_obstacles.py`
+with `pick_dyn_lifted_obstacles.py`, `pick_dyn_door_obstacles.py` or `pick_3d_target_obstacles.py`.
+
+Important is especially to set the environment Variable to be able to find the forcespro Package
+
+```bash
+export PYTHONPATH=/path/to/forces_pro_client/
 ```
 
 ## Usage
@@ -39,18 +91,6 @@ recommended to use PyCharm as IDE and run the Configurations from there.
    trained RL agent.
    To compare the performance of MPPI-HGG to pure MPPI, MPC, HGG, or exHGG-MPC, replace the `play_policy` argument
    with `MPPIPolicy`, `MPCPolicy`, `RLPolicy` or `MPCRLMPolicy` respectively.
-
-To run the MPC or exHGG-MPC algorithm, first generate a ForcesPro solver by setting up ForcesPro, following the
-instructions in the [ForcesPro documentation](https://forces.embotech.com/Documentation/installation/python.html), and
-run the following command:
-
-```bash
-cd mpc/
-python pick_dyn_sqr_obstacles.py --mpc_gen t
-```
-
-For the other environments, replace `pick_dyn_sqr_obstacles.py` with `pick_dyn_obstacles.py`
-or `pick_dyn_lifted_obstacles.py`.
 
 ## Future Work
 

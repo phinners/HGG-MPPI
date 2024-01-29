@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Run MPPI-HGG" type="PythonConfigurationType" factoryName="Python" folderName="Run Environments">
+  <configuration default="false" name="Run MPPI-HGG" type="PythonConfigurationType" factoryName="Python" folderName="Run Sim Environments">
     <module name="RL-MPC" />
     <option name="ENV_FILES" value="" />
     <option name="INTERPRETER_OPTIONS" value="" />
