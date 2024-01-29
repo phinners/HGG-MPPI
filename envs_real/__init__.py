@@ -21,7 +21,7 @@ def register_custom_envs():
         kwargs={'reward_type': 'sparse', 'n_substeps': 20},
     )
     gym.envs.register(
-        id='FrankaPickDynObstacles-v1',
+        id='FrankaFetchPickDynObstaclesEnv-v1',
         entry_point='envs_real:FrankaPickDynObstaclesEnv',
         max_episode_steps=100,
         kwargs={'reward_type': 'sparse', 'n_substeps': 20},

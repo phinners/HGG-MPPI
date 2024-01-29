@@ -41,7 +41,7 @@ class Player:
         # seed = 1240
         # seed = 4014
         # seed = 3019
-        seed = 1002
+        seed = 1144
         env.np_random.seed(seed)  # TODO remove
 
         for i in range(self.test_rollouts):
@@ -66,7 +66,6 @@ class Player:
 
                 actions, infos = self.policy.predict(obs=[ob])
                 action = actions[0]
-                # action[3] /= 500
                 ob, _, _, env_info = env.step(action)
 
                 # end = time.time()

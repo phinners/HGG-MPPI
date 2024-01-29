@@ -14,7 +14,7 @@ def get_parameters(args):
     if args.tune_mppi <= 0:
         args.α = 0  # 5.94e-1
         args.λ = 60  # 40  # 1.62e1
-        args.σ = 0.20  # 0.01  # 08  # 0.25  # 4.0505  # 10.52e1
+        args.σ = 0.40  # 0.01  # 08  # 0.25  # 4.0505  # 10.52e1
         args.χ = 0.0  # 2.00e-2
         args.ω1 = 1.0003
         args.ω2 = 9.16e3
@@ -25,7 +25,7 @@ def get_parameters(args):
 
     K = 500
     T = 10
-    Δt = 0.5  # Real Environment 0.5s Steptime 0.01
+    Δt = 0.01  # 0.5  # Real Environment 0.5s Steptime 0.01
     T_system = 0.011
 
     dtype = torch.double
@@ -72,7 +72,7 @@ def get_parameters(args):
         link8_pos = link8_matrix[:, :3, 3] + robot_base_pos  # Equals to panda0_gripper Bode in Mujoco File
 
         dist_robot_base = torch.norm(link8_pos - robot_base_pos, dim=1)
-
+        link8_pos[:, 2] = 0.42
         goal_dist = torch.norm((link8_pos - goal), dim=1)
         cost = 1000 * goal_dist ** 2
 
@@ -81,14 +81,14 @@ def get_parameters(args):
         collision = torch.logical_or(collision,
                                      torch.all(torch.le(dist1,
                                                         torch.tensor(obstacles[7:10], device=device) + torch.tensor(
-                                                            [0.08, 0.08, 0.03])),
+                                                            [0.075, 0.075, 0.03])),
                                                dim=1))
         collision = torch.logical_or(collision,
                                      torch.all(
                                          torch.le(dist2,
                                                   torch.tensor(obstacles[17:20],
                                                                device=device) + torch.tensor(
-                                                      [0.055, 0.055, 0.03])),
+                                                      [0.075, 0.065, 0.03])),
                                          dim=1))
 
         # Collision Detection with Hand
@@ -97,29 +97,31 @@ def get_parameters(args):
         hand_dimension = torch.tensor([0.030, 0.08, 0.05])  # X-Lenght: 0.05, Y-Lenght: 0.2, Z-Lenght: 0.653
         dist3 = torch.abs(hand[:, 0:3] - torch.tensor(obstacles[0:3], device=device))
         dist4 = torch.abs(hand[:, 0:3] - torch.tensor(obstacles[10:13], device=device))
-        collision = torch.logical_or(collision,
-                                     torch.all(torch.le(dist3,
-                                                        torch.tensor(obstacles[7:10], device=device) + hand_dimension),
-                                               dim=1))
-        collision = torch.logical_or(collision,
-                                     torch.all(torch.le(dist4,
-                                                        torch.tensor(obstacles[17:20], device=device) + hand_dimension),
-                                               dim=1))
+        # collision = torch.logical_or(collision,
+        #                             torch.all(torch.le(dist3,
+        #                                                torch.tensor(obstacles[7:10], device=device) + hand_dimension),
+        #                                       dim=1))
+        # collision = torch.logical_or(collision,
+        #                             torch.all(torch.le(dist4,
+        #                                                torch.tensor(obstacles[17:20], device=device) + hand_dimension),
+        #                                       dim=1))
 
         if torch.any(collision):
             # print("Trajectorie with collision detected!")
             pass
 
         if torch.all(collision):
-            # print("All Trajectorie with collision detected!")
+            print("All Trajectorie with collision detected!")
             pass
 
         table_collision = torch.le(link8_pos[:, 2], 0.40)
         workspace_costs = torch.ge(dist_robot_base, 0.8)
+        workspace_costs_minx = torch.le(link8_pos[:, 0], 1.05)
 
         cost += args.ω2 * collision
         # cost += args.ω3 * table_collision
         cost += args.ω4 * workspace_costs
+        cost += args.ω4 * workspace_costs_minx
         collision = torch.zeros([500, ], dtype=torch.bool)
         return cost
 

@@ -72,15 +72,15 @@ class FrankaPickDynLiftedObstaclesEnv(robot_env.RobotEnv, gym.utils.EzPickle):
         self.field = [1.3, 0.75, 0.6, 0.1, 0.35, 0.2]  # real env
         self.dyn_obstacles_geom_names = ['obstacle:geom', 'obstacle2:geom']
         self.stat_obstacles_geom_names = ['obstacle3:geom']
-        self.stat_obstacles = [[1.3, 0.65, 0.425, 1.0, 0.0, 0.0, 0.0, 0.24, 0.03, 0.025]]
-        self.dyn_obstacles = [[1.3, 0.85, 0.421, 1.0, 0.0, 0.0, 0.0, 0.045, 0.017, 0.02],
-                              [1.3, 0.65, 0.471, 1.0, 0.0, 0.0, 0.0, 0.015, 0.017, 0.02]]  # real env
+        self.stat_obstacles = [[1.3, 0.6, 0.425, 1.0, 0.0, 0.0, 0.0, 0.25, 0.03, 0.03]]
+        self.dyn_obstacles = [[1.3, 0.8, 0.465, 1.0, 0.0, 0.0, 0.0, 0.03, 0.03, 0.03],
+                              [1.3, 0.6, 0.5, 1.0, 0.0, 0.0, 0.0, 0.12, 0.03, 0.06]]  # real env
 
         self.obstacles = self.dyn_obstacles + self.stat_obstacles
         self.obstacles_geom_names = self.dyn_obstacles_geom_names + self.stat_obstacles_geom_names
 
         super(FrankaPickDynLiftedObstaclesEnv, self).__init__(
-            model_path=model_path, n_substeps=n_substeps, n_actions=4,
+            model_path=model_path, n_substeps=n_substeps, n_actions=8,
             initial_qpos=initial_qpos)
 
         gym.utils.EzPickle.__init__(self)

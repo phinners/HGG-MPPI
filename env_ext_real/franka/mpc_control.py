@@ -1,5 +1,7 @@
-import gym
+import copy
+
 import numpy as np
+
 from .vanilla import VanillaGoalEnv
 
 
@@ -38,7 +40,6 @@ class MPCControlGoalEnv(VanillaGoalEnv):
         new_info['ExReward'] = self.total_reward
         return new_info
 
-
     def _extend_reward(self, reward, obs):
         new_reward = reward
         if obs['collision_check']:
@@ -67,8 +68,8 @@ class MPCControlGoalEnv(VanillaGoalEnv):
 
         # calculate the velocities of the objects
         real_obstacle_info = obs['real_obstacle_info']
-        real_obstacle_info_pos = real_obstacle_info[:,0:3]
-        prev_real_obstacle_info_pos = prev_obs['real_obstacle_info'][:,0:3]
+        real_obstacle_info_pos = real_obstacle_info[:, 0:3]
+        prev_real_obstacle_info_pos = prev_obs['real_obstacle_info'][:, 0:3]
         dt = self.dt
         obj_vels = (real_obstacle_info_pos - prev_real_obstacle_info_pos) / dt
         obs['obj_vels'] = obj_vels
@@ -113,6 +114,32 @@ class MPCControlGoalEnv(VanillaGoalEnv):
                 sub_goal[2] = max(0, self.sim_env.block_max_z)
 
         return sub_goal
+
+    def subgoal_sim(self, rl_action: np.ndarray, grip_pos: np.ndarray) -> np.ndarray:
+        action = np.clip(rl_action, self.action_space.low, self.action_space.high)
+        pos_ctrl, rot_ctrl, gripper_ctrl = action[0:3], action[3:7], action[7]
+
+        pos_ctrl *= 0.03  # 0.018  # 0.022  # limit maximum change in position
+
+        sub_goal = grip_pos + pos_ctrl
+
+        if self.sim_env.block_z:
+            target_z = sub_goal[2]
+            if target_z > self.sim_env.block_max_z:
+                # robot can not move higher
+                sub_goal[2] = max(0, self.sim_env.block_max_z)
+
+        return sub_goal
+
+    def observation_sim(self, obs, subgoal):
+        obs_sim = copy.deepcopy(obs)
+
+        diff = obs_sim[0]['observation'][25:28] - obs_sim[0]['observation'][
+                                                  0:3]  # Position Difference between Gripper and Object
+        obs_sim[0]['observation'][0:3] = subgoal.copy()  # Gripper Position
+        obs_sim[0]['observation'][25:28] = subgoal.copy() + diff  # Object Position #Was 3:6 in DynLifted
+
+        return obs_sim
 
     def extract_parameters_3d(self, horizon: int, ts: float, sub_goal: np.ndarray):
         goal = self.goal

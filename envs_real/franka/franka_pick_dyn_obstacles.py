@@ -1,11 +1,10 @@
+import copy
+import math
 import os
 from typing import List
 
 import gym
-from gym_robotics.envs import fetch_env
 import numpy as np
-import copy
-import math
 from gym_robotics.envs import rotations, robot_env, utils
 
 # Ensure we get the path separator correct on windows
@@ -66,17 +65,18 @@ class FrankaPickDynObstaclesEnv(robot_env.RobotEnv, gym.utils.EzPickle):
         self.target_range_y = 0.01
         self.distance_threshold = 0.01
         self.reward_type = reward_type
-        self.limit_action = 0.05    # limit maximum change in position
+        self.limit_action = 0.05  # limit maximum change in position
 
         self.field = [1.3, 0.75, 0.6, 0.1, 0.35, 0.2]  # real env
-        self.dyn_obstacles = [[1.3, 0.85, 0.411, 0.045, 0.017, 0.01],
-                              [1.3, 0.65, 0.411, 0.015, 0.017, 0.01]]  # real env
+        self.dyn_obstacles = [[1.3, 0.6, 0.435, 1.0, 0.0, 0.0, 0.0, 0.03, 0.03, 0.03],  # 0.045, 0.017, 0.01],
+                              [1.3, 0.8, 0.435, 1.0, 0.0, 0.0, 0.0, 0.12, 0.03,
+                               0.03]]  # 0.015, 0.017, 0.01]]  # real env
 
         self.obstacles = self.dyn_obstacles
         self.block_max_z = 0.53
 
         super(FrankaPickDynObstaclesEnv, self).__init__(
-            model_path=model_path, n_substeps=n_substeps, n_actions=4,
+            model_path=model_path, n_substeps=n_substeps, n_actions=8,
             initial_qpos=initial_qpos)
 
         gym.utils.EzPickle.__init__(self)
@@ -232,7 +232,8 @@ class FrankaPickDynObstaclesEnv(robot_env.RobotEnv, gym.utils.EzPickle):
 
     def _get_obs(self):
         # positions
-        grip_pos = self.sim.data.get_site_xpos('grip_site')
+        grip_pos = self.sim.data.get_body_xpos('eef')  # self.sim.data.get_site_xpos('grip_site')
+        grip_rot = self.sim.data.get_body_xquat('eef')
         dt = self.sim.nsubsteps * self.sim.model.opt.timestep
         grip_velp = self.sim.data.get_site_xvelp('grip_site') * dt
         robot_qpos, robot_qvel = utils.robot_get_obs(self.sim)
@@ -258,12 +259,14 @@ class FrankaPickDynObstaclesEnv(robot_env.RobotEnv, gym.utils.EzPickle):
 
         body_id = self.sim.model.body_name2id('obstacle')
         pos1 = np.array(self.sim.data.body_xpos[body_id].copy())
+        rot1 = np.array(self.sim.data.body_xquat[body_id].copy())
         body_id2 = self.sim.model.body_name2id('obstacle2')
         pos2 = np.array(self.sim.data.body_xpos[body_id2].copy())
-        dims1 = self.obstacles[0][3:6]
-        dims2 = self.obstacles[1][3:6]
-        ob1 = np.concatenate((pos1, dims1.copy()))
-        ob2 = np.concatenate((pos2, dims2.copy()))
+        rot2 = np.array(self.sim.data.body_xquat[body_id2].copy())
+        dims1 = self.obstacles[0][7:10]
+        dims2 = self.obstacles[1][7:10]
+        ob1 = np.concatenate((pos1, rot1, dims1.copy()))
+        ob2 = np.concatenate((pos2, rot2, dims2.copy()))
 
         # obs = np.concatenate([
         #     grip_pos, object_pos.ravel(), object_rel_pos.ravel(), gripper_state, object_rot.ravel(),
@@ -272,9 +275,16 @@ class FrankaPickDynObstaclesEnv(robot_env.RobotEnv, gym.utils.EzPickle):
         # obs = np.concatenate([
         #     grip_pos, object_pos.ravel(), object_rel_pos.ravel(), gripper_state, object_rot.ravel(),
         # ])
+        # obs = np.concatenate([
+        #        grip_pos, object_pos.ravel(), object_rot.ravel()
+        # ])
+
         obs = np.concatenate([
-                grip_pos, object_pos.ravel(), object_rot.ravel()
+            grip_pos, grip_rot, robot_qpos, robot_qvel, object_pos.ravel(), object_rel_pos.ravel(), gripper_state,
+            object_rot.ravel(),
+            object_velp.ravel(), object_velr.ravel(), grip_velp, gripper_vel
         ])
+
         # print("grip_pos", grip_pos)
         # print("object_pos.ravel()", object_pos.ravel())
         # print("object_rel_pos.ravel()", object_rel_pos.ravel())

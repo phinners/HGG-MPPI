@@ -33,7 +33,7 @@ class RLPolicy(Policy):
     # predicts next actions for given states (observations)
     def predict(self, obs: Vector) -> (Vector, InfoVector):
         actions = self._my_step_batch(obs)
-        return actions
+        return actions, []
 
     def _my_step_batch(self, obs):
         # compute actions from obs based on current policy by running tf session initialized before

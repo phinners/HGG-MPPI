@@ -160,17 +160,17 @@ class MPPIRLPolicy(Policy):
 
             hgg_trajectory = plt.Circle((self.mppi_policy.interim_goals[0, 0], self.mppi_policy.interim_goals[1, 0]),
                                         0.005, color='tab:blue', fill=True, zorder=3)
-            plt.gca().add_patch(hgg_trajectory)
+            # plt.gca().add_patch(hgg_trajectory)
             for i in range(self.mppi_policy.T):
                 interimgoal = plt.Circle((self.mppi_policy.interim_goals[0, i], self.mppi_policy.interim_goals[1, i]),
                                          0.005, color='tab:blue', fill=True, zorder=3)
-                plt.gca().add_patch(interimgoal)
+                # plt.gca().add_patch(interimgoal)
             # subgoal_hgg = plt.Circle((hgg_subgoal[:1], hgg_subgoal[1:2]), 0.01, color='tab:blue', fill=True, zorder=3)
             target_mppi = None
             target_mppi = plt.Circle((mppi_target[0, 0], mppi_target[0, 1]), 0.005, color='tab:orange',
                                      fill=True,
                                      zorder=3)
-            plt.gca().add_patch(target_mppi)
+            # plt.gca().add_patch(target_mppi)
             # plt.gca().add_patch(subgoal_hgg)
 
             if collision_rollout is not None and collision_free_rollout is not None:
@@ -180,14 +180,14 @@ class MPPIRLPolicy(Policy):
                      'Obstacles', 'Current Pos'])
             elif collision_rollout is None and collision_free_rollout is not None:
                 plt.gca().legend([collision_free_rollout, hgg_trajectory, target_mppi, obs_0, curr_pos],
-                                 ['Rollouts w/o Collision', 'HGG-Trajectory', 'Goal MPPI', 'Obstacles', 'Current Pos'])
+                                 ['MPPI Rollouts', 'HGG-Trajectory', 'Goal MPPI', 'Obstacles', 'Current Pos'])
             elif collision_rollout is not None and collision_free_rollout is None:
                 plt.gca().legend([collision_rollout, hgg_trajectory, target_mppi, obs_0, curr_pos],
                                  ['Rollouts w Collision', 'HGG-Trajectory', 'Goal MPPI', 'Obstacles', 'Current Pos'])
             elif collision_rollout is None and collision_free_rollout is None:
                 plt.gca().legend([hgg_trajectory, target_mppi, obs_0, curr_pos],
                                  ['HGG-Trajectory', 'Goal MPPI', 'Obstacles', 'Current Pos'])
-            plt.title("HGG-MPPI with Top View")
+            plt.title("MPPI with Top View")
             plt.xlim([1.05, 1.55])
             plt.ylim([0.40, 1.10])
             plt.draw()

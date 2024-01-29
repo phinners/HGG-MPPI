@@ -57,7 +57,7 @@ def main():
     if args.tune_mppi < 100:
         raise ValueError("Number of trials should be at least 100")
     study = optuna.create_study(storage="sqlite:///mppi_tuning_results/db.mppi-hyperparameter-tuning",
-                                study_name='lifted_obstacles-with_vel_reward', load_if_exists=True)
+                                study_name='PickDynObstaclesEnv-v1', load_if_exists=True)
     # study.enqueue_trial({
     #     'α': 0.6154264807467676,
     #     'λ': 5.283829203406557,

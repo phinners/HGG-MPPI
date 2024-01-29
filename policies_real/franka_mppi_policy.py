@@ -9,7 +9,7 @@ import mppi_real
 from env_ext_real.franka import MPCControlGoalEnv
 from mpc_real.franka_mpc_common import extract_parameters
 from mppi.pick_dyn_door_obstacles import getCollisions
-from policies.policy import Policy
+from policies_real.franka_policy import Policy
 
 
 # TODO get this working for better performance than scipy
@@ -116,11 +116,11 @@ class MPPIPolicy(Policy):
 
     def parse_observation(self, obs, goal):
         ob = obs['observation']
-        obstacles = ob['real_obstacle_info']
-        dt = ob['dt']
-        vels = ob['obj_vels'][:, 0]
-        pos_dif = ob['pos_dif']
-        center_x = ob['center_x']
+        obstacles = obs['real_obstacle_info']
+        dt = obs['dt']
+        vels = obs['obj_vels'][:, 0]
+        pos_dif = obs['pos_dif']
+        center_x = obs['center_x']
 
         eef_pos = ob[0:3]
         eef_rot = ob[3:7]

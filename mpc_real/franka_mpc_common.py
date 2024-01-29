@@ -1,13 +1,13 @@
-import numpy as np
 import math
-from matplotlib import pyplot as plt
+
+import numpy as np
 
 
 def back_forth(a, s, v, t):
     if v == 0:
         return s
-    p = 4*a / v
-    return 2 * a / math.pi * math.asin(math.sin(s * math.pi / (2*a) + 2 * math.pi / p * t))
+    p = 1 / (2 * v)
+    return ((2 * a) / math.pi) * math.asin(math.sin(((s * math.pi) / (2 * a)) + ((2 * math.pi) / p) * t))
 
 
 def move_obstacles(t, obstacles, vels, pos_dif, x_center):
@@ -25,7 +25,8 @@ def extract_parameters(subgoal, goal, dt, N, obstacles, vels, pos_dif, x_center)
     goals = np.append(subgoal, goal)
     dyn_obs = obstacles.copy()
 
-    return np.array([np.concatenate([goals, move_obstacles(dt*n, dyn_obs, vels, pos_dif, x_center).ravel()]) for n in range(N)])
+    return np.array(
+        [np.concatenate([goals, move_obstacles(dt * n, dyn_obs, vels, pos_dif, x_center).ravel()]) for n in range(N)])
 
 
 def make_obs(p):

@@ -14,7 +14,7 @@ def get_parameters(args):
     if args.tune_mppi <= 0:
         args.α = 0  # 5.94e-1
         args.λ = 60  # 40  # 1.62e1
-        args.σ = 0.20  # 0.01  # 08  # 0.25  # 4.0505  # 10.52e1
+        args.σ = 0.4  # 1.0  # 0.01  # 08  # 0.25  # 4.0505  # 10.52e1
         args.χ = 0.0  # 2.00e-2
         args.ω1 = 1.0003
         args.ω2 = 9.16e3
@@ -25,7 +25,7 @@ def get_parameters(args):
 
     K = 500
     T = 10
-    Δt = 0.5  # Real Environment 0.5s Steptime 0.01
+    Δt = 0.01  # 0.5  # Real Environment 0.5s Steptime 0.01
     T_system = 0.011
 
     dtype = torch.double
@@ -97,29 +97,29 @@ def get_parameters(args):
         collision = torch.logical_or(collision,
                                      torch.all(torch.le(dist3EEF,
                                                         torch.tensor(obstacles[27:30], device=device) + torch.tensor(
-                                                            [0.055, 0.055, 0.03])),
+                                                            [0.055, 0.01, 0.03])),
                                                dim=1))
 
         # Collision Detection with Hand
         hand = link8_pos.clone()
-        hand[:, 2] += 0.11
+        hand[:, 2] += 0.04  # 0.11
         dist4 = torch.abs(hand[:, 0:3] - torch.tensor(obstacles[0:3], device=device))
         dist5 = torch.abs(hand[:, 0:3] - torch.tensor(obstacles[10:13], device=device))
         dist6 = torch.abs(hand[:, 0:3] - torch.tensor(obstacles[20:23], device=device))
         collision = torch.logical_or(collision,
                                      torch.all(torch.le(dist4,
                                                         torch.tensor(obstacles[7:10], device=device) + torch.tensor(
-                                                            [0.030, 0.08, 0.05])),
+                                                            [0.030, 0.01, 0.07])),
                                                dim=1))
         collision = torch.logical_or(collision,
                                      torch.all(torch.le(dist5,
                                                         torch.tensor(obstacles[17:20], device=device) + torch.tensor(
-                                                            [0.030, 0.11, 0.05])),
+                                                            [0.050, 0.12, 0.07])),
                                                dim=1))
         collision = torch.logical_or(collision,
                                      torch.all(torch.le(dist6,
                                                         torch.tensor(obstacles[27:30], device=device) + torch.tensor(
-                                                            [0.030, 0.08, 0.05])),
+                                                            [0.030, 0.01, 0.07])),
                                                dim=1))
 
         if torch.any(collision):
@@ -130,12 +130,16 @@ def get_parameters(args):
             # print("All Trajectorie with collision detected!")
             pass
 
-        table_collision = torch.le(link8_pos[:, 2], 0.38)
+        table_collision = torch.le(link8_pos[:, 2], 0.42)
+        height_collision = torch.ge(link8_pos[:, 2], 0.55)
+        workspace_x_costs = torch.le(link8_pos[:, 0], 1.15)
         workspace_costs = torch.ge(dist_robot_base, 0.8)
 
         cost += args.ω2 * collision
         # cost += args.ω3 * table_collision
-        cost += args.ω4 * workspace_costs
+        # cost += args.ω3 * height_collision
+        # cost += args.ω4 * workspace_costs
+        # cost += args.ω4 * workspace_x_costs
         # collision = torch.zeros([500, ], dtype=torch.bool)
         return cost
 
