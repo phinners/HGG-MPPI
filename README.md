@@ -75,9 +75,11 @@ export PYTHONPATH=/path/to/forces_pro_client/
 All the run commands are preloaded as run configurations when importing the project into PyCharm. Therefore it is
 recommended to use PyCharm as IDE and run the Configurations from there.
 
+If you want to run from terminal (which is not recommended!) go with the following structure:
+
 1. Train the RL agent on the desired environment.
    There are four environments
-   available: `FrankaFetchPickDynObstaclesEnv-v1`, `FrankaFetchPickDynLiftedObstaclesEnv-v1`, `FrankaFetchPickDynDoorObstaclesEnv-v2`,
+   available: `FrankaFetchPickDynObstaclesEnv-v1`, `FrankaFetchPickDynLiftedObstaclesEnv-v1`, `FrankaFetchPickDynDoorObstaclesEnv-v1`,
    and `FrankaFetchPick3DTargetObstacle-v1`.
    ```bash
    python train2.py --alg ddpg2 --epochs 20 --env=FrankaFetchPickDynObstaclesEnv-v1 --reward_min -10 --goal mpc
